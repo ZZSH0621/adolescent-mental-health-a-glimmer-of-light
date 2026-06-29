@@ -1,0 +1,3566 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>心情副本｜互动封面</title>
+  <style>
+    :root {
+      --bg-1: #0d1324;
+      --bg-2: #18223d;
+      --bg-3: #2a3358;
+      --text: #f8f3e8;
+      --muted: rgba(248, 243, 232, 0.72);
+      --line: rgba(255, 255, 255, 0.14);
+      --card: rgba(255, 255, 255, 0.1);
+      --card-strong: rgba(255, 255, 255, 0.18);
+      --gold: #ffd978;
+      --lamp: #ffe16d;
+      --mint: #a8f0d8;
+      --blue: #9dc6ff;
+      --pink: #ffb8d0;
+      --purple: #cab6ff;
+      --shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 16% 18%, rgba(255, 217, 120, 0.18), transparent 28%),
+        radial-gradient(circle at 82% 14%, rgba(157, 198, 255, 0.19), transparent 32%),
+        radial-gradient(circle at 72% 78%, rgba(168, 240, 216, 0.13), transparent 34%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 54%, var(--bg-3));
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: -20%;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.72) 1px, transparent 1.7px),
+        radial-gradient(circle, rgba(255,217,120,0.55) 1px, transparent 1.7px);
+      background-size: 92px 92px, 137px 137px;
+      animation: starDrift 40s linear infinite;
+      opacity: 0.27;
+    }
+
+    body::after {
+      animation-duration: 62s;
+      animation-direction: reverse;
+      opacity: 0.16;
+      filter: blur(0.4px);
+    }
+
+    @keyframes starDrift {
+      from { transform: translate3d(0, 0, 0); }
+      to { transform: translate3d(120px, 160px, 0); }
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      width: min(1200px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 38px 0 52px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .badge,
+    .sound-btn,
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(18px);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .sound-btn,
+    .back-btn {
+      cursor: pointer;
+      transition: transform .2s ease, background .2s ease, color .2s ease;
+    }
+
+    .sound-btn:hover,
+    .back-btn:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.14);
+      color: var(--text);
+    }
+
+    /* 音景级别选择器 */
+    .level-selector {
+      display: none;
+      align-items: center;
+      gap: 0;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(18px);
+      flex-shrink: 0;
+    }
+
+    .level-selector.show {
+      display: inline-flex;
+    }
+
+    .level-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all .25s ease;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .level-btn:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .level-btn.active {
+      color: #fff;
+      background: rgba(255,255,255,0.18);
+      box-shadow: inset 0 0 12px rgba(255,255,255,0.06);
+    }
+
+    /* 天气主题色联动 */
+    .weather-canvas.rain .level-btn.active { background: rgba(157,198,255,0.28); color: #b8d4ff; }
+    .weather-canvas.fog .level-btn.active { background: rgba(200,210,230,0.25); color: #d0d8e8; }
+    .weather-canvas.noise .level-btn.active { background: rgba(255,184,208,0.25); color: #ffc0d8; }
+    .weather-canvas.empty .level-btn.active { background: rgba(180,180,200,0.2); color: #c0c0d0; }
+    .weather-canvas.fire .level-btn.active { background: rgba(255,140,80,0.28); color: #ffb090; }
+    .weather-canvas.tired .level-btn.active { background: rgba(168,240,216,0.22); color: #a8f0d8; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.03fr) minmax(360px, 0.97fr);
+      gap: 26px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.07));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(24px);
+      overflow: hidden;
+    }
+
+    .intro {
+      position: relative;
+      min-height: 820px;
+      padding: 46px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .intro::after {
+      content: "";
+      position: absolute;
+      right: -110px;
+      bottom: -130px;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,217,120,0.28), transparent 65%);
+    }
+
+    .intro-top {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .intro-top .eyebrow,
+    .intro-top h1,
+    .intro-top .subtitle {
+      width: 100%;
+    }
+
+    .intro-top .eyebrow,
+    .intro-top h1 {
+      text-align: center;
+    }
+
+    .intro-top .subtitle {
+      text-align: center;
+      margin: 16px auto 0;
+      max-width: 520px;
+    }
+
+    .eyebrow {
+      margin-bottom: 6px;
+      color: var(--gold);
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(44px, 5.5vw, 72px);
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: rgba(248, 243, 232, 0.88);
+      font-size: clamp(17px, 1.8vw, 23px);
+      line-height: 1.72;
+    }
+
+    .quote {
+      position: relative;
+      z-index: 1;
+      margin-top: 22px;
+      padding: 22px 24px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      background: rgba(13, 19, 36, 0.42);
+      color: rgba(248, 243, 232, 0.88);
+      font-size: 18px;
+      line-height: 1.78;
+    }
+
+    .quote strong { color: var(--gold); }
+
+    /* ── 小灯图片卡片 · 星空主题 ── */
+    .intro-image-card {
+      position: relative;
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 30% 22%, rgba(157,198,255,0.16), transparent 34%),
+        radial-gradient(circle at 72% 68%, rgba(168,240,216,0.11), transparent 28%),
+        radial-gradient(circle at 50% 50%, rgba(255,217,120,0.06), transparent 50%),
+        linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
+      max-width: 440px;
+      margin-top: 18px;
+      align-self: center;
+      backdrop-filter: blur(14px);
+      box-shadow:
+        0 22px 64px rgba(0,0,0,0.38),
+        0 0 44px rgba(157,198,255,0.14),
+        0 0 100px rgba(157,198,255,0.05),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+      transition: box-shadow 0.4s ease, border-color 0.4s ease;
+      cursor: pointer;
+      perspective: 1000px;
+    }
+
+    .intro-image-card::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: 26px;
+      background: linear-gradient(135deg,
+        rgba(157,198,255,0.45) 0%,
+        rgba(168,240,216,0.2) 25%,
+        transparent 45%,
+        transparent 55%,
+        rgba(255,184,208,0.2) 70%,
+        rgba(255,217,120,0.35) 100%);
+      z-index: -1;
+      opacity: 0.55;
+      animation: borderGlow 3s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    @keyframes borderGlow {
+      0% { opacity: 0.4; filter: blur(2px); }
+      100% { opacity: 0.75; filter: blur(4px); }
+    }
+
+    .intro-image-card:hover {
+      border-color: rgba(157,198,255,0.5);
+      box-shadow:
+        0 28px 80px rgba(0,0,0,0.5),
+        0 0 80px rgba(157,198,255,0.3),
+        0 0 160px rgba(157,198,255,0.12),
+        0 0 240px rgba(168,240,216,0.06);
+    }
+
+    .intro-image-card:hover::before {
+      opacity: 0.9;
+      animation-duration: 1.2s;
+    }
+
+    /* ── 3D 翻转容器 ── */
+    .card-inner {
+      position: relative;
+      width: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform;
+      border-radius: 24px;
+    }
+
+    .card-inner.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-front,
+    .card-back {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 24px;
+    }
+
+    .card-front {
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-back {
+      position: absolute;
+      inset: 0;
+      transform: rotateY(180deg);
+      background:
+        radial-gradient(circle at 30% 22%, rgba(157,198,255,0.12), transparent 30%),
+        radial-gradient(circle at 72% 68%, rgba(168,240,216,0.08), transparent 26%),
+        linear-gradient(160deg, rgba(13,19,36,0.96), rgba(24,34,61,0.94), rgba(42,51,83,0.92));
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* 背面的星光粒子 */
+    .card-back-stars {
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      background-image:
+        radial-gradient(2px 2px at 18% 14%, rgba(255,255,255,0.75), transparent),
+        radial-gradient(1.5px 1.5px at 82% 22%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(2.5px 2.5px at 44% 78%, rgba(255,217,120,0.8), transparent),
+        radial-gradient(1.5px 1.5px at 68% 48%, rgba(255,255,255,0.55), transparent),
+        radial-gradient(2px 2px at 24% 62%, rgba(157,198,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 88% 76%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(2px 2px at 12% 84%, rgba(168,240,216,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 56% 28%, rgba(255,255,255,0.55), transparent),
+        radial-gradient(2px 2px at 92% 8%, rgba(255,217,120,0.65), transparent);
+      pointer-events: none;
+      animation: starTwinkle 3s ease-in-out infinite alternate;
+    }
+
+    .card-back-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .card-back-quote {
+      font-family: "Georgia", "Times New Roman", "KaiTi", "STKaiti", "楷体", serif;
+      font-size: clamp(18px, 2.2vw, 24px);
+      line-height: 2;
+      color: rgba(248,243,232,0.94);
+      margin: 0;
+      font-style: italic;
+      letter-spacing: 0.08em;
+      text-shadow: 0 1px 8px rgba(255,217,120,0.12);
+      transform: skewX(-6deg);
+      display: inline-block;
+    }
+
+    .card-back-highlight {
+      color: #c8944a;
+      font-style: italic;
+      text-shadow: 0 0 6px rgba(200,148,74,0.3);
+    }
+
+    .card-back-author {
+      margin-top: 20px;
+      color: var(--gold);
+      font-size: 15px;
+      letter-spacing: 0.12em;
+    }
+
+    /* 正面星光粒子 */
+    .card-front::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      background-image:
+        radial-gradient(2.5px 2.5px at 18% 14%, rgba(255,255,255,0.95), transparent),
+        radial-gradient(2px 2px at 82% 22%, rgba(255,255,255,0.85), transparent),
+        radial-gradient(3px 3px at 44% 78%, rgba(255,217,120,0.95), transparent),
+        radial-gradient(2px 2px at 68% 48%, rgba(255,255,255,0.75), transparent),
+        radial-gradient(2.5px 2.5px at 24% 62%, rgba(157,198,255,0.85), transparent),
+        radial-gradient(2px 2px at 88% 76%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(3px 3px at 12% 84%, rgba(168,240,216,0.9), transparent),
+        radial-gradient(2px 2px at 56% 28%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(2.5px 2.5px at 92% 8%, rgba(255,217,120,0.8), transparent);
+      pointer-events: none;
+      animation: starTwinkle 2.4s ease-in-out infinite alternate;
+    }
+
+    @keyframes starTwinkle {
+      0% { opacity: 0.45; }
+      50% { opacity: 0.9; }
+      100% { opacity: 0.55; }
+    }
+
+    .intro-image-card:hover .card-front::after {
+      opacity: 1;
+      animation-duration: 1s;
+    }
+
+    .intro-image {
+      width: 100%;
+      height: auto;
+      border-radius: 16px;
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+
+    .intro-image-caption {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      letter-spacing: 0.06em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .side {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 20px;
+    }
+
+    .lamp-card,
+    .weather {
+      padding: 28px;
+    }
+
+    .lamp-scene {
+      position: relative;
+      height: 190px;
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(13,19,36,0.12), rgba(13,19,36,0.48)),
+        radial-gradient(circle at 50% 34%, rgba(255,217,120,0.38), transparent 18%),
+        linear-gradient(160deg, rgba(157,198,255,0.19), rgba(255,184,208,0.12));
+      overflow: hidden;
+    }
+
+    .xiaodeng-art {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 23%;
+      filter: saturate(0.92) brightness(1.04);
+      transform: scale(1.02);
+      animation: portraitBreathe 5s ease-in-out infinite alternate;
+    }
+
+    .xiaodeng-art::selection { background: transparent; }
+
+    @keyframes portraitBreathe {
+      from { transform: scale(1.02) translateY(0); }
+      to { transform: scale(1.055) translateY(-3px); }
+    }
+
+    .lamp-scene::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 52%, rgba(13,19,36,0.52));
+      pointer-events: none;
+    }
+
+    .walker-track {
+      position: absolute;
+      z-index: 3;
+      left: -90px;
+      bottom: 2px;
+      width: 96px;
+      height: 210px;
+      animation: walkTravel 12s linear infinite;
+    }
+
+    .walker-sprite {
+      width: 100%;
+      height: 100%;
+      background-image: url("assets/xiaodeng-walk-v1-normalized-final.png");
+      background-repeat: no-repeat;
+      background-size: 800% 100%;
+      background-position: 0 0;
+      animation: walkFrames .92s steps(7) infinite;
+      filter: drop-shadow(0 0 12px rgba(255, 225, 109, 0.48));
+    }
+
+    @keyframes walkFrames {
+      from { background-position: 0 0; }
+      to { background-position: 100% 0; }
+    }
+
+    @keyframes walkTravel {
+      from { transform: translateX(0); }
+      to { transform: translateX(610px); }
+    }
+
+    .path {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      bottom: 0;
+      height: 70px;
+      background: rgba(13,19,36,0.38);
+      border-radius: 50% 50% 0 0 / 90% 90% 0 0;
+    }
+
+    .girl {
+      position: absolute;
+      left: 20px;
+      bottom: 38px;
+      width: 82px;
+      height: 122px;
+      animation: walkAcross 9s linear infinite;
+      transform-origin: bottom center;
+      filter: drop-shadow(0 0 18px rgba(255, 225, 109, 0.42));
+    }
+
+    @keyframes walkAcross {
+      0% { transform: translateX(0) translateY(0); }
+      25% { transform: translateX(120px) translateY(-6px); }
+      50% { transform: translateX(245px) translateY(0); }
+      75% { transform: translateX(360px) translateY(-6px); }
+      100% { transform: translateX(510px) translateY(0); }
+    }
+
+    .hair {
+      position: absolute;
+      left: 20px;
+      top: 2px;
+      width: 42px;
+      height: 46px;
+      border-radius: 50% 50% 44% 44%;
+      background:
+        radial-gradient(circle at 50% 18%, #fff7cb 0 18%, transparent 19%),
+        linear-gradient(180deg, #fff1a8, var(--lamp) 58%, #ffbd69);
+      box-shadow: 0 0 24px var(--lamp), 0 0 72px rgba(255,217,120,0.9);
+      animation: lampPulse 2.6s ease-in-out infinite;
+    }
+
+    .hair::before,
+    .hair::after {
+      content: "";
+      position: absolute;
+      top: 17px;
+      width: 13px;
+      height: 28px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ffe681, #ffbd69);
+      box-shadow: 0 0 16px rgba(255,217,120,0.62);
+    }
+
+    .hair::before { left: -7px; transform: rotate(18deg); }
+    .hair::after { right: -7px; transform: rotate(-18deg); }
+
+    .halo {
+      position: absolute;
+      left: 10px;
+      top: -8px;
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 239, 178, 0.48);
+      box-shadow: 0 0 34px rgba(255, 225, 109, 0.38);
+      animation: haloFloat 3.4s ease-in-out infinite;
+    }
+
+    @keyframes haloFloat {
+      0%, 100% { transform: translateY(0) scale(1); opacity: 0.72; }
+      50% { transform: translateY(-4px) scale(1.04); opacity: 1; }
+    }
+
+    .face {
+      position: absolute;
+      left: 25px;
+      top: 28px;
+      width: 31px;
+      height: 29px;
+      border-radius: 50%;
+      background: #ffe7d5;
+    }
+
+    .face::before,
+    .face::after {
+      content: "";
+      position: absolute;
+      top: 13px;
+      width: 3px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(42, 32, 32, 0.55);
+    }
+
+    .face::before { left: 9px; }
+    .face::after { right: 9px; }
+
+    .cape {
+      position: absolute;
+      left: 6px;
+      top: 50px;
+      width: 70px;
+      height: 66px;
+      border-radius: 34px 34px 20px 20px;
+      background:
+        radial-gradient(circle at 50% 12%, rgba(255,255,255,0.9), transparent 20%),
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(223,235,255,0.88) 64%, rgba(190,216,255,0.55));
+      clip-path: polygon(50% 0, 92% 18%, 80% 100%, 50% 82%, 20% 100%, 8% 18%);
+      box-shadow: inset 0 0 22px rgba(255,255,255,0.55), 0 16px 24px rgba(0,0,0,0.16);
+      animation: capeBreath 1.8s ease-in-out infinite;
+    }
+
+    @keyframes capeBreath {
+      0%, 100% { transform: scaleX(1); }
+      50% { transform: scaleX(1.06); }
+    }
+
+    .dress {
+      position: absolute;
+      left: 20px;
+      top: 58px;
+      width: 42px;
+      height: 48px;
+      border-radius: 22px 22px 16px 16px;
+      background: linear-gradient(180deg, #ffffff, #eef4ff);
+      box-shadow: inset 0 0 16px rgba(255,255,255,0.55);
+    }
+
+    .scarf {
+      position: absolute;
+      left: 18px;
+      top: 55px;
+      width: 48px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255,217,120,0.95), rgba(168,240,216,0.82));
+      box-shadow: 0 0 18px rgba(255,217,120,0.48);
+    }
+
+    .scarf::after {
+      content: "";
+      position: absolute;
+      right: -18px;
+      top: 2px;
+      width: 24px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(168,240,216,0.82);
+      transform: rotate(10deg);
+      animation: scarfWave 1.3s ease-in-out infinite;
+    }
+
+    @keyframes scarfWave {
+      0%, 100% { transform: rotate(8deg) translateY(0); }
+      50% { transform: rotate(-8deg) translateY(-3px); }
+    }
+
+    .leg {
+      position: absolute;
+      top: 102px;
+      width: 5px;
+      height: 18px;
+      border-radius: 999px;
+      background: #ffe7d5;
+      transform-origin: top center;
+    }
+
+    .leg.left { left: 31px; animation: legA .74s ease-in-out infinite; }
+    .leg.right { left: 47px; animation: legB .74s ease-in-out infinite; }
+
+    @keyframes legA {
+      0%, 100% { transform: rotate(14deg); }
+      50% { transform: rotate(-12deg); }
+    }
+
+    @keyframes legB {
+      0%, 100% { transform: rotate(-12deg); }
+      50% { transform: rotate(14deg); }
+    }
+
+    @keyframes lampPulse {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.25); }
+    }
+
+    .lamp-card h2,
+    .weather h2 {
+      margin: 20px 0 10px;
+      font-size: 24px;
+    }
+
+    .lamp-card p,
+    .weather p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.74;
+    }
+
+    .weather h2 { margin-top: 0; }
+
+    .weather-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .weather-btn {
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 18px;
+      padding: 15px 14px;
+      background: rgba(255,255,255,0.08);
+      text-align: left;
+      transition: transform .2s ease, background .2s ease, border-color .2s ease;
+    }
+
+    .weather-btn:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.15);
+      border-color: rgba(255,217,120,0.55);
+    }
+
+    .weather-btn span {
+      display: block;
+      color: rgba(248,243,232,0.58);
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .weather-hint {
+      margin-top: 18px;
+      padding: 18px;
+      min-height: 112px;
+      border-radius: 22px;
+      background: rgba(13,19,36,0.36);
+      border: 1px solid rgba(255,255,255,0.12);
+      line-height: 1.72;
+      color: rgba(248,243,232,0.9);
+    }
+
+    .map {
+      margin-top: 28px;
+      position: relative;
+      width: 100%;
+      height: 720px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .map-ring {
+      position: relative;
+      width: 580px;
+      height: 580px;
+    }
+
+    @media (max-width: 640px) {
+      .map { height: 490px; }
+      .map-ring { width: 380px; height: 380px; }
+    }
+
+    .emotion-lab {
+      margin-top: 28px;
+      padding: 30px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr);
+      gap: 22px;
+    }
+
+    .emotion-lab h2 {
+      margin: 0 0 10px;
+      font-size: 28px;
+    }
+
+    .emotion-lab p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.72;
+    }
+
+    .emotion-input-wrap {
+      margin-top: 20px;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 20px;
+      background: rgba(13,19,36,.36);
+    }
+
+    .emotion-input {
+      min-width: 0;
+      padding: 12px 14px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+    }
+
+    .emotion-input::placeholder { color: rgba(248,243,232,.42); }
+
+    .emotion-analyze,
+    .emotion-clear {
+      border: 1px solid rgba(255,217,120,.35);
+      border-radius: 14px;
+      padding: 11px 16px;
+      background: rgba(255,217,120,.14);
+      color: var(--gold);
+      cursor: pointer;
+    }
+
+    .emotion-analyze:hover,
+    .emotion-clear:hover { background: rgba(255,217,120,.22); }
+
+    .emotion-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      color: rgba(248,243,232,.48);
+      font-size: 12px;
+    }
+
+    .emotion-result {
+      min-height: 210px;
+      padding: 22px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 24px;
+      background: rgba(13,19,36,.34);
+    }
+
+    .emotion-result-title {
+      color: var(--gold);
+      font-size: 14px;
+      letter-spacing: .06em;
+    }
+
+    .emotion-result-copy {
+      margin-top: 12px;
+      color: rgba(248,243,232,.9);
+      line-height: 1.72;
+    }
+
+    .emotion-candidates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .emotion-chip {
+      border: 1px solid rgba(168,240,216,.28);
+      border-radius: 999px;
+      padding: 9px 13px;
+      background: rgba(168,240,216,.1);
+      color: var(--mint);
+      cursor: pointer;
+    }
+
+    .emotion-chip:hover,
+    .emotion-chip.selected {
+      background: rgba(168,240,216,.2);
+      border-color: rgba(168,240,216,.62);
+      transform: translateY(-2px);
+    }
+
+    .emotion-action-card {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-left: 3px solid var(--gold);
+      border-radius: 8px 16px 16px 8px;
+      background: rgba(255,217,120,.08);
+      color: rgba(248,243,232,.82);
+      line-height: 1.65;
+    }
+
+    .emotion-danger {
+      border-color: rgba(255,120,120,.42);
+      background: rgba(255,90,90,.1);
+      color: #ffd5d5;
+    }
+
+    .dungeon {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 26px;
+      background: rgba(255,255,255,0.09);
+      cursor: pointer;
+      transition: transform .22s ease, border-color .22s ease, background .22s ease, box-shadow .22s ease;
+      opacity: 0;
+      transform: scale(0);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      top: 50%;
+      left: 50%;
+      margin-top: -80px;
+      margin-left: -80px;
+      animation: cardCounterRotate 30s linear infinite;
+    }
+
+    .dungeon.bounce-in {
+      animation: dungeonBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes dungeonBounce {
+      0% {
+        opacity: 0;
+        transform: translate(var(--ring-x, 0), var(--ring-y, 0)) scale(0);
+      }
+      60% {
+        opacity: 1;
+        transform: translate(var(--ring-x, 0), var(--ring-y, 0)) scale(1.08);
+      }
+      80% {
+        transform: translate(var(--ring-x, 0), var(--ring-y, 0)) scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(var(--ring-x, 0), var(--ring-y, 0)) scale(var(--card-scale, 1));
+      }
+    }
+
+    .dungeon:hover,
+    .dungeon.active {
+      border-color: rgba(168,240,216,0.65);
+      background: rgba(255,255,255,0.14);
+      box-shadow: 0 8px 32px rgba(168,240,216,0.15);
+      z-index: 10;
+      --card-scale: 1.08;
+    }
+
+    .dungeon.bounce-in:hover,
+    .dungeon.bounce-in.active {
+      animation: dungeonBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, none;
+    }
+
+    .dungeon .icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .dungeon h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      line-height: 1.3;
+    }
+
+    .dungeon p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .drawer {
+      display: none;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 18px;
+      margin-top: 18px;
+      animation: appear .25s ease both;
+    }
+
+    .drawer.show { display: grid; }
+
+/* ===== 完整互动游戏 iframe 弹层 ===== */
+.game-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: var(--bg-1);
+  flex-direction: column;
+  animation: appear .25s ease both;
+}
+.game-overlay.show { display: flex; }
+.game-overlay .game-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  z-index: 31;
+  background: var(--card-strong);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all .25s;
+}
+.game-overlay .game-close:hover {
+  background: var(--gold);
+  color: var(--bg-1);
+}
+.game-overlay iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .story,
+    .card {
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 26px;
+      background: rgba(255,255,255,0.1);
+      line-height: 1.8;
+    }
+
+    .story h3,
+    .card h3 {
+      margin: 0 0 14px;
+      color: var(--gold);
+      font-size: 22px;
+    }
+
+    .choices {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .choice {
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 16px;
+      padding: 13px 14px;
+      background: rgba(13,19,36,0.3);
+      line-height: 1.55;
+    }
+
+    .choice:hover,
+    .choice.selected {
+      background: rgba(255,217,120,0.15);
+      border-color: rgba(255,217,120,0.55);
+    }
+
+    .takeaway { color: var(--muted); }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .pill {
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(168,240,216,0.14);
+      color: var(--mint);
+      border: 1px solid rgba(168,240,216,0.24);
+      font-size: 14px;
+    }
+
+    .weather-page {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      overflow-y: auto;
+      background: #0d1324;
+    }
+
+    .weather-page.show {
+      display: block;
+      animation: pageIn .32s ease both;
+    }
+
+    @keyframes pageIn {
+      from { opacity: 0; transform: scale(1.01); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .weather-canvas {
+      min-height: 100vh;
+      position: relative;
+      padding: 32px;
+      overflow: hidden;
+    }
+
+    .weather-canvas.rain {
+      background:
+        linear-gradient(180deg, rgba(9,16,31,0.35), rgba(9,16,31,0.88)),
+        radial-gradient(circle at 30% 20%, rgba(157,198,255,0.22), transparent 30%),
+        linear-gradient(145deg, #111c34, #202f54);
+    }
+
+    .weather-canvas.fog {
+      background:
+        radial-gradient(circle at 36% 28%, rgba(255,255,255,0.18), transparent 28%),
+        linear-gradient(145deg, #35425b, #172033 70%);
+    }
+
+    .weather-canvas.noise {
+      background:
+        radial-gradient(circle at 28% 22%, rgba(255,184,208,0.22), transparent 24%),
+        radial-gradient(circle at 78% 72%, rgba(157,198,255,0.2), transparent 30%),
+        linear-gradient(145deg, #211a39, #101729);
+    }
+
+    .weather-canvas.empty {
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.06), transparent 26%),
+        linear-gradient(145deg, #111827, #080d17);
+    }
+
+    .weather-canvas.fire {
+      background:
+        radial-gradient(circle at 70% 20%, rgba(255,116,74,0.28), transparent 28%),
+        radial-gradient(circle at 18% 78%, rgba(255,217,120,0.16), transparent 34%),
+        linear-gradient(145deg, #2b1116, #14111f 66%);
+    }
+
+    .weather-canvas.tired {
+      background:
+        radial-gradient(circle at 18% 18%, rgba(168,240,216,0.12), transparent 24%),
+        linear-gradient(145deg, #142239, #1b2741 60%, #27314d);
+    }
+
+    .scene-top {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      width: min(1120px, 100%);
+      margin: 0 auto 24px;
+    }
+
+    .scene-card {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 24px;
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: 34px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 36px;
+      background: rgba(255,255,255,0.11);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(24px);
+    }
+
+    .scene-copy h2 {
+      margin: 0;
+      font-size: clamp(38px, 5vw, 72px);
+      letter-spacing: -0.06em;
+    }
+
+    .scene-copy .line {
+      margin: 18px 0 0;
+      color: rgba(248,243,232,0.88);
+      font-size: 22px;
+      line-height: 1.7;
+    }
+
+    .scene-copy .small {
+      margin-top: 22px;
+      color: var(--muted);
+      line-height: 1.85;
+      font-size: 16px;
+    }
+
+    .scene-actions {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .scene-action {
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 18px;
+      background: rgba(13,19,36,0.28);
+      color: rgba(248,243,232,0.9);
+      line-height: 1.65;
+    }
+
+    .scene-visual {
+      position: relative;
+      min-height: 480px;
+      border-radius: 30px;
+      background: rgba(13,19,36,0.25);
+      border: 1px solid rgba(255,255,255,0.12);
+      overflow: hidden;
+    }
+
+    .scene-xiaodeng-art {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 48% 24%;
+      filter: saturate(0.88) brightness(1.02);
+      animation: scenePortraitFloat 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes scenePortraitFloat {
+      from { transform: scale(1.04) translateY(0); }
+      to { transform: scale(1.08) translateY(-8px); }
+    }
+
+    .scene-visual::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background:
+        linear-gradient(180deg, rgba(13,19,36,0.05), rgba(13,19,36,0.32)),
+        radial-gradient(circle at 50% 28%, rgba(255,225,109,0.14), transparent 32%);
+      pointer-events: none;
+    }
+
+    .scene-walker-track {
+      position: absolute;
+      z-index: 3;
+      left: -150px;
+      bottom: 20px;
+      width: 206px;
+      height: 450px;
+      animation: sceneTravel 15s linear infinite;
+    }
+
+    .scene-walker-track .walker-sprite {
+      filter: drop-shadow(0 0 22px rgba(255, 225, 109, 0.58));
+    }
+
+    @keyframes sceneTravel {
+      from { transform: translateX(0); }
+      to { transform: translateX(650px); }
+    }
+
+    .scene-road {
+      position: absolute;
+      left: -10%;
+      right: -10%;
+      bottom: 0;
+      height: 150px;
+      background: rgba(13,19,36,0.34);
+      border-radius: 50% 50% 0 0 / 95% 95% 0 0;
+    }
+
+    .scene-girl {
+      position: absolute;
+      left: 44%;
+      bottom: 96px;
+      width: 110px;
+      height: 164px;
+      transform: translateX(-50%);
+      animation: sceneWalk 1.9s ease-in-out infinite;
+      filter: drop-shadow(0 0 28px rgba(255, 225, 109, 0.52));
+    }
+
+    @keyframes sceneWalk {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-6px); }
+    }
+
+    .scene-girl .hair {
+      left: 29px;
+      width: 54px;
+      height: 58px;
+    }
+
+    .scene-girl .face {
+      left: 37px;
+      top: 38px;
+      width: 38px;
+      height: 34px;
+    }
+
+    .scene-girl .halo {
+      left: 18px;
+      top: -10px;
+      width: 76px;
+      height: 76px;
+    }
+
+    .scene-girl .cape {
+      left: 10px;
+      top: 66px;
+      width: 92px;
+      height: 82px;
+    }
+
+    .scene-girl .dress {
+      left: 32px;
+      top: 74px;
+      width: 48px;
+      height: 58px;
+    }
+
+    .scene-girl .scarf {
+      left: 30px;
+      top: 70px;
+      width: 58px;
+    }
+
+    .scene-girl .leg {
+      top: 136px;
+      height: 26px;
+    }
+
+    .scene-girl .leg.left { left: 43px; }
+    .scene-girl .leg.right { left: 64px; }
+
+    .rain-layer,
+    .fog-layer,
+    .noise-layer,
+    .bubble-layer,
+    .ember-layer,
+    .blank-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .rain-layer {
+      background-image: linear-gradient(115deg, rgba(157,198,255,0.45) 0 1px, transparent 1px 12px);
+      background-size: 34px 34px;
+      animation: rainMove .5s linear infinite;
+      opacity: 0.6;
+    }
+
+    @keyframes rainMove {
+      to { transform: translate3d(-34px, 34px, 0); }
+    }
+
+    .fog-layer {
+      background:
+        radial-gradient(circle at 20% 45%, rgba(255,255,255,0.18), transparent 20%),
+        radial-gradient(circle at 70% 42%, rgba(255,255,255,0.14), transparent 24%),
+        radial-gradient(circle at 50% 70%, rgba(255,255,255,0.13), transparent 25%);
+      filter: blur(8px);
+      animation: fogMove 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes fogMove {
+      from { transform: translateX(-20px); }
+      to { transform: translateX(24px); }
+    }
+
+    .noise-layer {
+      background-image:
+        linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 34px 34px;
+      animation: jitter .4s steps(2) infinite;
+      opacity: 0.45;
+    }
+
+    @keyframes jitter {
+      0% { transform: translate(0, 0); }
+      50% { transform: translate(6px, -4px); }
+      100% { transform: translate(-3px, 5px); }
+    }
+
+    .bubble-layer {
+      background:
+        radial-gradient(circle at 28% 28%, rgba(255,255,255,0.09), transparent 7%),
+        radial-gradient(circle at 64% 60%, rgba(255,255,255,0.07), transparent 8%),
+        radial-gradient(circle at 48% 78%, rgba(255,255,255,0.06), transparent 6%);
+      animation: floaty 6s ease-in-out infinite alternate;
+    }
+
+    .ember-layer {
+      background-image:
+        radial-gradient(circle, rgba(255,217,120,0.8) 1px, transparent 2px),
+        radial-gradient(circle, rgba(255,116,74,0.65) 1px, transparent 2px);
+      background-size: 52px 52px, 87px 87px;
+      animation: emberMove 5s linear infinite;
+      opacity: 0.42;
+    }
+
+    @keyframes emberMove {
+      to { transform: translateY(-90px); }
+    }
+
+    .blank-layer {
+      background:
+        radial-gradient(circle at 50% 36%, rgba(255,255,255,0.1), transparent 17%);
+      animation: floaty 7s ease-in-out infinite alternate;
+    }
+
+    @keyframes floaty {
+      from { transform: translateY(0); }
+      to { transform: translateY(-18px); }
+    }
+
+    .pet-shell {
+      position: fixed;
+      right: 24px;
+      bottom: 22px;
+      z-index: 60;
+      width: 154px;
+      min-height: 166px;
+      display: grid;
+      place-items: center;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.32));
+    }
+
+    .pet-shell.dragging {
+      cursor: grabbing;
+      filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.42));
+    }
+
+    .pet-shell.dragging .pet-image {
+      animation: none;
+      transform: translateY(-8px) scale(.92) rotate(var(--pet-tilt, 0deg));
+      filter: brightness(1.08) drop-shadow(0 0 14px rgba(255,225,109,.58));
+    }
+
+    .pet-image {
+      width: 144px;
+      height: 144px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      pointer-events: none;
+      transform-origin: 50% 90%;
+      animation: petIdle 2.8s ease-in-out infinite;
+    }
+
+    @keyframes petIdle {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-4px) scale(1.012); }
+    }
+
+    .pet-shell.happy .pet-image { animation: petHop .55s ease-in-out 2; }
+    .pet-shell.curious .pet-image { animation: petTilt 1.2s ease-in-out infinite alternate; }
+    .pet-shell.sleepy .pet-image { animation: petSleep 3.2s ease-in-out infinite; }
+    .pet-shell.wave .pet-image { animation: petWave .7s ease-in-out 2; }
+    .pet-shell.comfort .pet-image { animation: petGlow 2s ease-in-out infinite; }
+
+    @keyframes petHop {
+      0%, 100% { transform: translateY(0) rotate(0); }
+      45% { transform: translateY(-18px) rotate(-3deg); }
+    }
+
+    @keyframes petTilt {
+      from { transform: rotate(-3deg) translateY(0); }
+      to { transform: rotate(4deg) translateY(-3px); }
+    }
+
+    @keyframes petSleep {
+      0%, 100% { transform: translateY(0) scale(1); opacity: .94; }
+      50% { transform: translateY(3px) scale(.985); opacity: .82; }
+    }
+
+    @keyframes petWave {
+      0%, 100% { transform: rotate(0); }
+      50% { transform: rotate(3deg) translateY(-4px); }
+    }
+
+    @keyframes petGlow {
+      0%, 100% { filter: brightness(1) drop-shadow(0 0 5px rgba(255,225,109,.45)); }
+      50% { filter: brightness(1.12) drop-shadow(0 0 18px rgba(255,225,109,.82)); }
+    }
+
+    .pet-name {
+      margin-top: -16px;
+      padding: 4px 10px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      background: rgba(13,19,36,.68);
+      color: rgba(248,243,232,.82);
+      font-size: 12px;
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    .pet-bubble {
+      position: absolute;
+      right: 118px;
+      top: 10px;
+      width: 184px;
+      padding: 12px 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 17px 17px 5px 17px;
+      background: rgba(13,19,36,.86);
+      color: rgba(248,243,232,.9);
+      font-size: 13px;
+      line-height: 1.55;
+      opacity: 0;
+      transform: translateY(6px) scale(.96);
+      transition: opacity .2s ease, transform .2s ease;
+      pointer-events: none;
+      backdrop-filter: blur(18px);
+    }
+
+    .pet-bubble.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .pet-menu {
+      position: absolute;
+      right: 130px;
+      bottom: 6px;
+      display: grid;
+      grid-template-columns: repeat(3, 42px);
+      gap: 7px;
+      padding: 9px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 18px;
+      background: rgba(13,19,36,.86);
+      backdrop-filter: blur(18px);
+      opacity: 0;
+      transform: translateX(8px) scale(.96);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .pet-menu.show {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .pet-action {
+      width: 42px;
+      height: 38px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,.08);
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .pet-action:hover {
+      background: rgba(255,217,120,.18);
+      border-color: rgba(255,217,120,.5);
+      transform: translateY(-2px);
+    }
+
+    .pet-chat-toggle {
+      position: absolute;
+      right: -8px;
+      bottom: 0;
+      z-index: 3;
+      padding: 8px 12px;
+      border: 1px solid rgba(255,217,120,.52);
+      border-radius: 999px;
+      background: rgba(20,28,49,.94);
+      color: #ffe49a;
+      font: 700 12px/1 inherit;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0,0,0,.28);
+      backdrop-filter: blur(14px);
+      white-space: nowrap;
+    }
+
+    .pet-chat-toggle:hover,
+    .pet-chat-toggle.open {
+      background: rgba(255,217,120,.2);
+      transform: translateY(-2px);
+    }
+
+    .pet-chat-panel {
+      position: absolute;
+      right: 128px;
+      bottom: -22px;
+      width: min(360px, calc(100vw - 188px));
+      padding: 16px;
+      border: 1px solid rgba(255,217,120,.3);
+      border-radius: 22px;
+      background: rgba(15,22,40,.97);
+      box-shadow: 0 20px 46px rgba(0,0,0,.42);
+      backdrop-filter: blur(22px);
+      opacity: 0;
+      transform: translateX(10px) scale(.97);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+      touch-action: auto;
+      max-height: min(560px, calc(100vh - 36px));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .pet-chat-panel.show {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .pet-shell.chat-right .pet-chat-panel {
+      left: 128px;
+      right: auto;
+    }
+
+    .pet-chat-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #fff2c7;
+      font-weight: 800;
+    }
+
+    .pet-chat-close {
+      border: 0;
+      background: transparent;
+      color: rgba(248,243,232,.58);
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .pet-chat-input {
+      width: 100%;
+      min-height: 76px;
+      margin-top: 12px;
+      padding: 12px 13px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      outline: 0;
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font: inherit;
+      line-height: 1.55;
+      box-sizing: border-box;
+    }
+
+    .pet-chat-input:focus { border-color: rgba(255,217,120,.62); }
+    .pet-chat-input::placeholder { color: rgba(248,243,232,.4); }
+
+    .pet-chat-send {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,217,120,.4);
+      border-radius: 13px;
+      background: linear-gradient(135deg, rgba(255,217,120,.24), rgba(255,174,117,.14));
+      color: #ffe49a;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .pet-chat-reply {
+      margin-top: 10px;
+      color: rgba(248,243,232,.78);
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+
+    .pet-chat-choices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 9px;
+    }
+
+    .pet-chat-choice {
+      padding: 7px 10px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      color: rgba(248,243,232,.9);
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .pet-chat-choice:hover { border-color: rgba(255,217,120,.58); }
+
+    .pet-chat-choice.primary {
+      border-color: rgba(255,217,120,.48);
+      background: rgba(255,217,120,.15);
+      color: #ffe49a;
+    }
+
+    .pet-color-choice {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pet-color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .pet-chat-followup {
+      flex: 1 0 100%;
+      min-height: 58px;
+      padding: 10px 11px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 12px;
+      outline: 0;
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font: inherit;
+      line-height: 1.5;
+      box-sizing: border-box;
+    }
+
+    footer {
+      margin-top: 28px;
+      color: rgba(248,243,232,0.58);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    @media (max-width: 940px) {
+      .hero,
+      .drawer,
+      .scene-card {
+        grid-template-columns: 1fr;
+      }
+
+      .intro {
+        min-height: 680px;
+        padding: 34px;
+      }
+
+      .intro-image-card {
+        max-width: 320px;
+      }
+
+      .intro-top .subtitle {
+        max-width: 100%;
+        padding: 0 8px;
+      }
+
+      .map {
+        height: 690px;
+      }
+      .map-ring {
+        width: 380px;
+        height: 380px;
+      }
+      .dungeon {
+        width: 130px;
+        height: 130px;
+        margin-top: -65px;
+        margin-left: -65px;
+        padding: 14px;
+      }
+      .dungeon .icon {
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+      .dungeon h2 {
+        font-size: 14px;
+      }
+      .dungeon p {
+        font-size: 11px;
+      }
+
+      .emotion-lab {
+        grid-template-columns: 1fr;
+      }
+
+      .weather-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .scene-card {
+        padding: 24px;
+      }
+
+      .pet-shell {
+        width: 124px;
+      }
+
+      .pet-image {
+        width: 116px;
+        height: 116px;
+      }
+
+      .pet-chat-panel {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: 92px;
+        width: auto;
+        max-height: calc(100vh - 112px);
+      }
+
+      .pet-shell.chat-right .pet-chat-panel {
+        left: 12px;
+        right: 12px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .map {
+        height: 490px;
+      }
+      .level-btn {
+        padding: 7px 12px;
+        font-size: 12px;
+      }
+      .scene-top {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap" id="home">
+    <header>
+      <div class="badge">🌙 TRAE AI 创造力大赛 · 青少年身心健康</div>
+      <button class="sound-btn" id="soundBtn">♪ 开启主界面音乐</button>
+    </header>
+
+    <section class="hero">
+      <article class="panel intro">
+        <div class="intro-top">
+          <div class="eyebrow">Mood Dungeon</div>
+          <h1>心情副本</h1>
+          <div class="intro-image-card" id="introImageCard">
+            <div class="card-inner" id="cardInner">
+              <div class="card-front">
+                <img src="动态gif图/小灯-睁眼闭眼.gif" alt="小灯" class="intro-image" />
+                <p class="intro-image-caption">小灯</p>
+              </div>
+              <div class="card-back">
+                <div class="card-back-stars"></div>
+                <div class="card-back-content">
+                  <p class="card-back-quote">你说<span class="card-back-highlight">"没事"</span>的时候，<br>这盏灯会替你记得<br>那些还没被说出来的<br>难过。</p>
+                  <p class="card-back-author">—— 小灯</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="subtitle">给青少年的情绪通关游戏。把说不出口的难过，变成可以一步步走出来的副本。</p>
+        </div>
+        <div class="quote">
+          很多青少年不是没有人爱他们，而是在最需要被理解的那一刻，<strong>说不出来</strong>。<br>
+          《心情副本》想在他们还没准备好向人求助之前，先给他们一个可以喘口气的地方。
+        </div>
+      </article>
+
+      <aside class="side">
+        <article class="panel lamp-card">
+          <div class="lamp-scene">
+            <div class="walker-track" aria-label="小灯横版行走动画">
+              <div class="walker-sprite"></div>
+            </div>
+            <div class="path"></div>
+          </div>
+          <h2>AI 队友「小灯」</h2>
+          <p>小灯是一个一直往前走的小女孩。她穿着小白衣，头发像灯一样发光。她不是来催你变好，而是在你看不清路的时候，先陪你照亮脚下。</p>
+        </article>
+
+        <article class="panel weather">
+          <h2>今天的你，像哪一种天气？</h2>
+          <p>每一种天气都有一个独立的小世界。点进去，不急着解决问题，先让小灯陪你走一段。</p>
+          <div class="weather-grid" id="weatherGrid"></div>
+          <div class="weather-hint" id="weatherHint">选择一个天气，进入属于它的界面。</div>
+        </article>
+      </aside>
+    </section>
+
+    <section class="panel emotion-lab" id="emotionLab">
+      <div>
+        <div class="eyebrow">Local Emotion Compass</div>
+        <h2>和小灯说一句</h2>
+        <p>小灯只在当前浏览器里检索你主动输入的文字。她会提出几个可能的情绪，由你决定哪一个更接近。</p>
+        <div class="emotion-input-wrap">
+          <input class="emotion-input" id="emotionInput" maxlength="240" autocomplete="off" placeholder="例如：明天就要考试了，我什么都没做，感觉要完了……" />
+          <button class="emotion-analyze" id="emotionAnalyze">让小灯猜猜</button>
+        </div>
+        <div class="emotion-meta">
+          <span>✓ 完全离线</span>
+          <span>✓ 不上传文本</span>
+          <span>✓ 需要你确认</span>
+          <button class="emotion-clear" id="emotionClear">清除本轮</button>
+        </div>
+      </div>
+      <div class="emotion-result" id="emotionResult">
+        <div class="emotion-result-title">小灯的情绪罗盘</div>
+        <div class="emotion-result-copy" id="emotionResultCopy">你可以说一件刚刚发生的小事，或者只写一句此刻最想说的话。</div>
+        <div class="emotion-candidates" id="emotionCandidates"></div>
+        <div id="emotionAction"></div>
+      </div>
+    </section>
+
+    <section class="map" id="map">
+      <div class="map-ring" id="mapRing"></div>
+    </section>
+
+    <section class="drawer" id="drawer">
+      <article class="story">
+        <h3 id="storyTitle">副本剧情</h3>
+        <div id="storyText"></div>
+        <div class="choices" id="choices"></div>
+      </article>
+      <article class="card">
+        <h3>通关卡片</h3>
+        <p class="takeaway" id="feedback">选择一个回应，小灯会帮你看见选择背后的情绪需求。</p>
+        <div class="pill-row" id="pills"></div>
+      </article>
+    </section>
+
+    <!-- 完整游戏 iframe 弹层 -->
+    <section class="game-overlay" id="gameOverlay">
+      <button class="game-close" id="gameClose">← 回到心情地图</button>
+      <iframe id="gameIframe" src="" title="完整副本" allow="autoplay"></iframe>
+    </section>
+
+    <footer>
+      不是替你通关，而是陪你练习通关。严重危机时，请立即联系可信成年人或专业帮助。
+    </footer>
+  </main>
+
+  <section class="weather-page" id="weatherPage" aria-live="polite">
+    <div class="weather-canvas" id="weatherCanvas">
+      <div id="weatherEffect"></div>
+      <div class="scene-top">
+        <button class="back-btn" id="backBtn">← 回到心情地图</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:center">
+          <div class="badge" id="sceneBadge">天气界面</div>
+          <button class="sound-btn" id="sceneSoundBtn">♪ 开启本天气音效</button>
+          <div class="level-selector" id="levelSelector"></div>
+        </div>
+      </div>
+      <div class="scene-card">
+        <div class="scene-copy">
+          <h2 id="sceneTitle"></h2>
+          <p class="line" id="sceneLine"></p>
+          <p class="small" id="sceneSmall"></p>
+          <div class="scene-actions" id="sceneActions"></div>
+        </div>
+        <div class="scene-visual">
+          <div id="visualEffect"></div>
+          <div class="scene-walker-track" aria-label="小灯在天气世界中持续向前行走">
+            <div class="walker-sprite"></div>
+          </div>
+          <div class="scene-road"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="pet-shell" id="petShell" aria-label="可拖拽的小灯宠物">
+    <div class="pet-bubble" id="petBubble">我会陪你慢慢走。</div>
+    <div class="pet-chat-panel" id="petChatPanel" aria-label="和小灯文字对话">
+      <div class="pet-chat-head">
+        <span>和小灯说一句</span>
+        <button class="pet-chat-close" id="petChatClose" aria-label="关闭对话">×</button>
+      </div>
+      <textarea class="pet-chat-input" id="petChatInput" maxlength="240" placeholder="现在发生了什么？哪怕只写一个词也可以。"></textarea>
+      <button class="pet-chat-send" id="petChatSend">让小灯听听</button>
+      <div class="pet-chat-reply" id="petChatReply">文字只在当前浏览器中分析，不会上传。</div>
+      <div class="pet-chat-choices" id="petChatChoices"></div>
+    </div>
+    <div class="pet-menu" id="petMenu" aria-label="小灯动作菜单">
+      <button class="pet-action" data-pet-state="idle" title="待机">🌙</button>
+      <button class="pet-action" data-pet-state="happy" title="开心">✨</button>
+      <button class="pet-action" data-pet-state="curious" title="好奇">❔</button>
+      <button class="pet-action" data-pet-state="sleepy" title="困倦">💤</button>
+      <button class="pet-action" data-pet-state="wave" title="挥手">👋</button>
+      <button class="pet-action" data-pet-state="comfort" title="安慰">💛</button>
+    </div>
+    <img class="pet-image" id="petImage" src="assets/pet/xiaodeng-pet-idle-v1.png" alt="小灯桌面宠物" draggable="false" />
+    <div class="pet-name">小灯 · 拖动我</div>
+    <button class="pet-chat-toggle" id="petChatToggle">💬 和我说</button>
+  </div>
+
+  <script src="data/xiaodeng-emotion-data.js"></script>
+  <script src="data/xiaodeng-emotion-engine.js"></script>
+  <script>
+    const weatherWorlds = [
+      {
+        key: "rain",
+        label: "🌧️ 快下雨了",
+        sub: "快要哭出来",
+        badge: "雨天副本 · 情绪避雨棚",
+        title: "快下雨了",
+        line: "不是所有眼泪都需要立刻解释。有时候，先找到一个能避雨的地方，就已经很勇敢。",
+        small: "这里是一间只亮着一盏灯的小候车亭。雨声很轻，小灯坐在旁边，不问你为什么哭，只递给你一张纸：先写下最想被谁听见的一句话。",
+        actions: [
+          "避雨任务：写下“我现在最难受的是……”",
+          "小灯提示：如果说不完整，也可以只写一个词。",
+          "带走卡片：我不是太脆弱，我只是现在真的需要被接住。"
+        ],
+        effect: "rain-layer"
+      },
+      {
+        key: "fog",
+        label: "🌫️ 雾很大",
+        sub: "不知道怎么办",
+        badge: "雾天副本 · 一步路灯",
+        title: "雾很大",
+        line: "看不清未来的时候，不必逼自己立刻找到出口。先看清脚下这一小步。",
+        small: "小灯走在前面，头发像一盏暖黄的小灯。雾里只有三米路是亮的。她说：今天我们不做决定，只确认下一步是什么。",
+        actions: [
+          "照路任务：把大问题拆成“下一步可以做什么”。",
+          "小灯提示：下一步必须小到 3 分钟内能开始。",
+          "带走卡片：我可以不确定，但我可以先往前一点点。"
+        ],
+        effect: "fog-layer"
+      },
+      {
+        key: "noise",
+        label: "🌪️ 心里很吵",
+        sub: "脑子停不下来",
+        badge: "风暴副本 · 静音按钮",
+        title: "心里很吵",
+        line: "有些声音不是答案，只是焦虑在抢麦克风。我们先把音量调低。",
+        small: "这个界面像一间半夜的广播室，很多杂音同时响起。小灯没有急着说话，她先帮你把声音分成三类：事实、猜测、害怕。",
+        actions: [
+          "静音任务：写下一个事实、一个猜测、一个害怕。",
+          "小灯提示：猜测不等于真相，害怕也不等于预言。",
+          "带走卡片：我可以听见情绪，但不用被它指挥。"
+        ],
+        effect: "noise-layer"
+      },
+      {
+        key: "empty",
+        label: "🌑 有点空",
+        sub: "什么都不想说",
+        badge: "空房间副本 · 留白",
+        title: "有点空",
+        line: "空空的感觉也值得被看见。你不用马上填满它。",
+        small: "这里是一间很安静的房间。没有任务倒计时，没有人催你解释。小灯只是慢慢往前走，把灯放在窗边，让房间不再完全黑。",
+        actions: [
+          "留白任务：选一个此刻最接近自己的词：累、麻、空、远、慢。",
+          "小灯提示：没有感觉，也是一种需要被照顾的状态。",
+          "带走卡片：我今天不需要表现得很好，我只需要不丢下自己。"
+        ],
+        effect: "blank-layer"
+      },
+      {
+        key: "fire",
+        label: "🔥 快爆炸了",
+        sub: "很生气很委屈",
+        badge: "火山副本 · 降温台阶",
+        title: "快爆炸了",
+        line: "愤怒不是坏东西，它常常在保护一个受伤的地方。我们先别让火烧到自己。",
+        small: "这里像一座夜里的小火山。小灯没有浇灭你的火，她只是带你退后三步：先让身体安全，再翻译真正想说的话。",
+        actions: [
+          "降温任务：先写“我生气，是因为我在意……”",
+          "小灯提示：攻击别人之前，先保护自己不被火烫伤。",
+          "带走卡片：我可以很生气，也可以选择更安全地表达。"
+        ],
+        effect: "ember-layer"
+      },
+      {
+        key: "tired",
+        label: "🫧 只是很累",
+        sub: "不想证明什么",
+        badge: "疲惫副本 · 休息许可",
+        title: "只是很累",
+        line: "累不是失败。累是身体在说：我已经撑了很久。",
+        small: "这是一个慢慢漂浮的水面。小灯走得很慢，白衣服像月光。她把今天的任务缩小到一件事：允许自己休息十分钟。",
+        actions: [
+          "休息任务：写下一个可以暂停 10 分钟的理由。",
+          "小灯提示：休息不是逃避，是给下一步留一点力气。",
+          "带走卡片：我不需要一直证明我值得被喜欢。"
+        ],
+        effect: "bubble-layer"
+      }
+    ];
+
+    const dungeons = [
+      {
+        icon: "💬",
+        title: "群聊安静了",
+        desc: "当没人回复，你开始怀疑自己。",
+        game: "心情副本-Demo-群聊安静了.html",
+        story: "晚上 9:47。你发了一条消息：“明天一起去食堂吗？”十分钟过去，没有人回复。可是你看到他们刚刚还在朋友圈互相评论。一个声音冒出来：他们是不是不想带我了？",
+        choices: [
+          ["直接质问他们", "这个选择像是在保护自己。你可能不是想攻击别人，只是太害怕被忽略了。我们可以换一种说法，既表达在意，也不把关系推到对立面。", ["失落", "事实与猜测分开", "冷静确认徽章"]],
+          ["假装没事", "假装没事能暂时保护你，但难受可能会留在心里。你可以先承认：我确实有点失落。", ["压抑", "看见感受", "自我照顾徽章"]],
+          ["先确认事实", "这是一个温柔但有边界的选择。你没有否定自己的感受，也没有直接把猜测当事实。", ["确认", "非攻击表达", "沟通练习徽章"]]
+        ]
+      },
+      {
+        icon: "📘",
+        title: "明天就考试",
+        desc: "当焦虑把明天变成怪兽。",
+        story: "明天数学考试。你翻开练习册，发现还有很多题不会。越看越慌，脑子里只剩一句话：完了，我肯定考砸。你开始刷手机，想逃开这种感觉。可越刷越内疚。",
+        choices: [
+          ["熬夜看完全部", "焦虑会骗你说必须一次解决所有问题。但你真正需要的是把任务变小，而不是把自己耗空。", ["焦虑", "任务拆分", "保护精力徽章"]],
+          ["直接放弃", "放弃有时候不是不在乎，而是太害怕失败。我们不用今晚搬完整座山，只找三块最值得搬的小石头。", ["逃避", "重新开始", "三分钟启动徽章"]],
+          ["做最小复习计划", "这就是通关入口：不解决全部问题，但从逃避变成开始。", ["开始", "15分钟计划", "启动徽章"]]
+        ]
+      },
+      {
+        icon: "🚪",
+        title: "你怎么又玩手机",
+        desc: "当你想解释，却先吵了起来。",
+        story: "你刚写完一部分作业，拿起手机休息五分钟。爸爸推门进来，看了一眼就说：“你怎么又在玩手机？”你突然很委屈。你想解释，但一开口就变成了：“你烦不烦啊！”",
+        choices: [
+          ["大声吵回去", "你真正想说的可能不是“你烦不烦”，而是“我也有在努力，只是你刚好没看见”。", ["委屈", "翻译真实需求", "表达徽章"]],
+          ["沉默继续玩", "沉默能让冲突暂时停下，但你的委屈没有被听见。我们可以先让情绪降一点。", ["沉默", "情绪降温", "暂停徽章"]],
+          ["说出事实和需求", "这是一种更容易被听见的表达：我刚刚写完一部分，想休息五分钟。你直接说我一直玩，我会觉得委屈。", ["边界", "需求表达", "亲子沟通徽章"]]
+        ]
+      },
+      {
+        icon: "📖",
+        title: "命运之书",
+        desc: "心里想着一个问题，翻开小灯的书。",
+        game: "心情副本-小灯的一页.html"
+      }
+    ]; 
+
+    const weatherGrid = document.getElementById("weatherGrid");
+    const weatherHint = document.getElementById("weatherHint");
+    const weatherPage = document.getElementById("weatherPage");
+    const weatherCanvas = document.getElementById("weatherCanvas");
+    const weatherEffect = document.getElementById("weatherEffect");
+    const visualEffect = document.getElementById("visualEffect");
+    const backBtn = document.getElementById("backBtn");
+    const sceneBadge = document.getElementById("sceneBadge");
+    const sceneTitle = document.getElementById("sceneTitle");
+    const sceneLine = document.getElementById("sceneLine");
+    const sceneSmall = document.getElementById("sceneSmall");
+    const sceneActions = document.getElementById("sceneActions");
+    const map = document.getElementById("map");
+    const drawer = document.getElementById("drawer");
+    const storyTitle = document.getElementById("storyTitle");
+    const storyText = document.getElementById("storyText");
+    const choices = document.getElementById("choices");
+    const feedback = document.getElementById("feedback");
+    const pills = document.getElementById("pills");
+    const gameOverlay = document.getElementById("gameOverlay");
+    const gameIframe = document.getElementById("gameIframe");
+    const gameClose = document.getElementById("gameClose");
+    const soundBtn = document.getElementById("soundBtn");
+    const sceneSoundBtn = document.getElementById("sceneSoundBtn");
+    const levelSelector = document.getElementById("levelSelector");
+    const petShell = document.getElementById("petShell");
+    const petImage = document.getElementById("petImage");
+    const petBubble = document.getElementById("petBubble");
+    const petMenu = document.getElementById("petMenu");
+    const petChatToggle = document.getElementById("petChatToggle");
+    const petChatPanel = document.getElementById("petChatPanel");
+    const petChatClose = document.getElementById("petChatClose");
+    const petChatInput = document.getElementById("petChatInput");
+    const petChatSend = document.getElementById("petChatSend");
+    const petChatReply = document.getElementById("petChatReply");
+    const petChatChoices = document.getElementById("petChatChoices");
+    const emotionInput = document.getElementById("emotionInput");
+    const emotionAnalyze = document.getElementById("emotionAnalyze");
+    const emotionClear = document.getElementById("emotionClear");
+    const emotionResult = document.getElementById("emotionResult");
+    const emotionResultCopy = document.getElementById("emotionResultCopy");
+    const emotionCandidates = document.getElementById("emotionCandidates");
+    const emotionAction = document.getElementById("emotionAction");
+
+    const petStates = {
+      idle: {
+        src: "assets/pet/xiaodeng-pet-idle-v1.png",
+        lines: [
+          "我会陪你慢慢走。",
+          "今天也不用急着通关。",
+          "累了就停在这里一会儿。",
+          "我把灯调暗一点，刚好适合发呆。",
+          "有些路，慢慢走反而看得更清楚。",
+          "你不说话也没关系，我听得见安静。",
+          "今天的你，已经完成了很多看不见的事。",
+          "这里没有倒计时，我们可以待久一点。",
+          "如果不知道去哪，就先和我站在这里。",
+          "每一种心情，都有被允许存在的位置。",
+          "星星没有催促过夜晚。",
+          "我会替你记住：你正在努力。"
+        ]
+      },
+      happy: {
+        src: "assets/pet/xiaodeng-pet-happy-v1.png",
+        lines: [
+          "耶！又往前走了一点。",
+          "这一小步也值得庆祝！",
+          "星星看见你啦。",
+          "刚才那一步，走得很漂亮。",
+          "我就知道你能找到自己的节奏。",
+          "今天的光，好像比刚才亮了一点。",
+          "不用完成大事，也可以为自己开心。",
+          "把这一刻收藏起来吧。",
+          "嘿嘿，我们通关了一小格！",
+          "你的努力没有消失，我看见啦。"
+        ]
+      },
+      curious: {
+        src: "assets/pet/xiaodeng-pet-curious-v1.png",
+        lines: [
+          "这里藏着什么心情呢？",
+          "要不要一起看看？",
+          "我在听，你慢慢说。",
+          "这件事最让你在意的是哪一部分？",
+          "如果不用解释完整，你会先说哪个词？",
+          "这是事实、猜测，还是一种害怕呢？",
+          "我们换一个角度看看，会不会不一样？",
+          "你刚才停顿了一下，是想到了什么吗？",
+          "这个副本好像还有一扇隐藏的小门。",
+          "答案不一定只有一个哦。"
+        ]
+      },
+      sleepy: {
+        src: "assets/pet/xiaodeng-pet-sleepy-v1.png",
+        lines: [
+          "休息不是逃跑哦……",
+          "今天已经走了很远啦。",
+          "我先替你守一会儿灯。",
+          "眼睛累了就看看远处吧。",
+          "今天不需要把所有事都做完。",
+          "暂停一下，不会让你落后。",
+          "我把声音放轻一点……",
+          "困倦是身体寄来的一封信。",
+          "十分钟的休息，也是一种认真生活。",
+          "晚一点再继续，也完全来得及。"
+        ]
+      },
+      wave: {
+        src: "assets/pet/xiaodeng-pet-wave-v1.png",
+        lines: [
+          "你好呀，我是小灯。",
+          "我一直在这里。",
+          "回来啦！",
+          "今天想从哪个副本开始？",
+          "嗨，见到你真好。",
+          "我给你留了一点暖光。",
+          "不管离开多久，地图都会等你。",
+          "欢迎回到不用逞强的地方。",
+          "这次也一起走吧。",
+          "我刚好也想见你。"
+        ]
+      },
+      comfort: {
+        src: "assets/pet/xiaodeng-pet-comfort-v1.png",
+        lines: [
+          "这盏光先借给你。",
+          "不用一个人扛着。",
+          "看不清路时，我们先照亮脚下。",
+          "你不是矫情，你只是现在真的很难受。",
+          "我不会催你振作，我们先待在这里。",
+          "有些委屈，说出来才会有形状。",
+          "你可以难过，不需要为难过道歉。",
+          "如果一句话太难，就先说：我需要你陪我。",
+          "你不必证明自己的感受足够严重。",
+          "我不能替你走，但可以陪你走。",
+          "这件事已经够累了，别再责怪自己。",
+          "今天先保护好自己，就已经很勇敢。"
+        ]
+      }
+    };
+
+    const petSituationalLines = {
+      dragStart: [
+        "抓稳啦，我们换个地方！",
+        "要带我去看哪里？",
+        "轻一点，我的灯还亮着呢。",
+        "出发！这次你来带路。",
+        "我准备好搬家啦。"
+      ],
+      dragEnd: [
+        "这里的风景也不错。",
+        "好，就把灯放在这里。",
+        "新位置确认，我会乖乖待着。",
+        "这个角落很适合陪你。",
+        "到站啦，谢谢你带我过来。"
+      ],
+      hover: [
+        "你来找我了吗？",
+        "嗯？我在这里。",
+        "需要一小盏灯吗？",
+        "你靠近的时候，我会亮一点。",
+        "想让我陪你做什么？"
+      ],
+      doubleClick: [
+        "嘿嘿，被你发现啦！",
+        "这是我们的秘密击掌！",
+        "再点一下，我可能会更开心。",
+        "收到一份双倍的喜欢！"
+      ],
+      musicOn: [
+        "音乐响起来了，路也变得柔软了。",
+        "我会跟着旋律慢慢发光。",
+        "这首歌像夜空里的一条小路。"
+      ],
+      musicOff: [
+        "安静也有自己的声音。",
+        "音乐休息了，我还在。",
+        "那就一起听一会儿夜色吧。"
+      ],
+      morning: [
+        "早上好，今天先从一件小事开始吧。",
+        "晨光来啦，我替你保存一点。",
+        "新的一天不需要一开始就很完美。"
+      ],
+      afternoon: [
+        "下午好，记得让眼睛和肩膀休息一下。",
+        "走到一天的一半，也辛苦啦。",
+        "要不要给自己三分钟的空白？"
+      ],
+      evening: [
+        "晚上好，今天有没有哪一刻想被记住？",
+        "夜色到了，可以把白天的盔甲放下了。",
+        "欢迎回来，今晚的灯是暖色的。"
+      ],
+      lateNight: [
+        "已经很晚了，剩下的事情可以交给明天。",
+        "夜深啦，我把灯光调得更柔一点。",
+        "如果睡不着，就先陪自己安静呼吸。"
+      ]
+    };
+
+    let petState = "idle";
+    let petDragging = false;
+    let petMoved = false;
+    let petPointerOffset = { x: 0, y: 0 };
+    let petLastPointerX = 0;
+    let petBubbleTimer = null;
+    let petReturnTimer = null;
+    const petRecentLines = [];
+
+    function pickFromLines(lines) {
+      const candidates = lines.filter(line => !petRecentLines.includes(line));
+      const pool = candidates.length ? candidates : lines;
+      const line = pool[Math.floor(Math.random() * pool.length)];
+      petRecentLines.push(line);
+      while (petRecentLines.length > 5) petRecentLines.shift();
+      return line;
+    }
+
+    function pickPetLine(state) {
+      return pickFromLines(petStates[state].lines);
+    }
+
+    function showPetBubble(text, duration = 2600) {
+      clearTimeout(petBubbleTimer);
+      petBubble.textContent = text;
+      petBubble.classList.add("show");
+      petBubbleTimer = setTimeout(() => petBubble.classList.remove("show"), duration);
+    }
+
+    function setPetState(state, options = {}) {
+      if (!petStates[state]) state = "idle";
+      petState = state;
+      petImage.src = petStates[state].src;
+      petShell.classList.remove("happy", "curious", "sleepy", "wave", "comfort");
+      if (state !== "idle") petShell.classList.add(state);
+      if (options.speak !== false) showPetBubble(options.line || pickPetLine(state), options.duration || 2600);
+      clearTimeout(petReturnTimer);
+      if (options.returnToIdle) {
+        petReturnTimer = setTimeout(() => setPetState("idle", { speak: false }), options.returnToIdle);
+      }
+    }
+
+    function clampPetPosition(left, top) {
+      const width = petShell.offsetWidth;
+      const height = petShell.offsetHeight;
+      return {
+        left: Math.max(0, Math.min(window.innerWidth - width, left)),
+        top: Math.max(0, Math.min(window.innerHeight - height, top))
+      };
+    }
+
+    function placePet(left, top, persist = false) {
+      const position = clampPetPosition(left, top);
+      petShell.style.left = `${position.left}px`;
+      petShell.style.top = `${position.top}px`;
+      petShell.style.right = "auto";
+      petShell.style.bottom = "auto";
+      if (persist) localStorage.setItem("moodDungeonPetPosition", JSON.stringify(position));
+    }
+
+    function restorePetPosition() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("moodDungeonPetPosition"));
+        if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) placePet(saved.left, saved.top);
+      } catch (error) {}
+    }
+
+    petShell.addEventListener("pointerdown", event => {
+      if (event.target.closest(".pet-action, .pet-chat-toggle, .pet-chat-panel")) return;
+      const rect = petShell.getBoundingClientRect();
+      petDragging = true;
+      petMoved = false;
+      petPointerOffset = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      petLastPointerX = event.clientX;
+      petShell.classList.add("dragging");
+      petShell.setPointerCapture(event.pointerId);
+      petMenu.classList.remove("show");
+      setPetState("happy", { line: pickFromLines(petSituationalLines.dragStart), duration: 1800 });
+    });
+
+    petShell.addEventListener("pointermove", event => {
+      if (!petDragging) return;
+      const deltaX = event.clientX - petLastPointerX;
+      petLastPointerX = event.clientX;
+      petMoved = petMoved || Math.abs(deltaX) > 2 || Math.abs(event.movementY) > 2;
+      petShell.style.setProperty("--pet-tilt", `${Math.max(-10, Math.min(10, deltaX * 1.5))}deg`);
+      placePet(event.clientX - petPointerOffset.x, event.clientY - petPointerOffset.y);
+    });
+
+    function finishPetDrag(event) {
+      if (!petDragging) return;
+      petDragging = false;
+      petShell.classList.remove("dragging");
+      petShell.style.removeProperty("--pet-tilt");
+      try { petShell.releasePointerCapture(event.pointerId); } catch (error) {}
+      const rect = petShell.getBoundingClientRect();
+      placePet(rect.left, rect.top, true);
+      if (petMoved) setPetState("wave", { line: pickFromLines(petSituationalLines.dragEnd), returnToIdle: 1800 });
+    }
+
+    petShell.addEventListener("pointerup", finishPetDrag);
+    petShell.addEventListener("pointercancel", finishPetDrag);
+
+    petShell.addEventListener("mouseenter", () => {
+      if (petDragging) return;
+      setPetState("curious", { line: pickFromLines(petSituationalLines.hover), duration: 1800 });
+    });
+
+    petShell.addEventListener("mouseleave", () => {
+      if (petDragging || petMenu.classList.contains("show")) return;
+      clearTimeout(petReturnTimer);
+      petReturnTimer = setTimeout(() => setPetState("idle", { speak: false }), 650);
+    });
+
+    petShell.addEventListener("click", event => {
+      if (petMoved || event.target.closest(".pet-action, .pet-chat-toggle, .pet-chat-panel")) return;
+      petMenu.classList.toggle("show");
+      showPetBubble(petMenu.classList.contains("show") ? "想让我做什么？" : pickPetLine(petState), 1800);
+    });
+
+    petShell.addEventListener("dblclick", event => {
+      event.preventDefault();
+      petMenu.classList.remove("show");
+      setPetState("happy", { line: pickFromLines(petSituationalLines.doubleClick), returnToIdle: 2200 });
+    });
+
+    petMenu.querySelectorAll(".pet-action").forEach(button => {
+      button.addEventListener("click", event => {
+        event.stopPropagation();
+        const state = button.dataset.petState;
+        petMenu.classList.remove("show");
+        setPetState(state, { returnToIdle: state === "idle" ? 0 : 3600 });
+      });
+    });
+
+    window.addEventListener("resize", () => {
+      const rect = petShell.getBoundingClientRect();
+      placePet(rect.left, rect.top, true);
+    });
+
+    restorePetPosition();
+
+    function greetByTime() {
+      const hour = new Date().getHours();
+      const period = hour < 6 ? "lateNight" : hour < 12 ? "morning" : hour < 18 ? "afternoon" : hour < 23 ? "evening" : "lateNight";
+      setTimeout(() => setPetState("wave", {
+        line: pickFromLines(petSituationalLines[period]),
+        returnToIdle: 3600
+      }), 900);
+    }
+
+    greetByTime();
+
+    setInterval(() => {
+      if (petDragging || petMenu.classList.contains("show") || document.hidden) return;
+      const roll = Math.random();
+      if (roll < 0.38) setPetState("sleepy", { speak: false, returnToIdle: 2600 });
+      else if (roll < 0.7) setPetState("wave", { speak: false, returnToIdle: 1800 });
+      else setPetState("comfort", { speak: false, returnToIdle: 2400 });
+    }, 12000);
+
+    let lastEmotionResult = null;
+
+    function resetEmotionResult() {
+      lastEmotionResult = null;
+      emotionInput.value = "";
+      emotionCandidates.innerHTML = "";
+      emotionAction.innerHTML = "";
+      emotionResult.classList.remove("emotion-danger");
+      emotionResultCopy.textContent = "你可以说一件刚刚发生的小事，或者只写一句此刻最想说的话。";
+      setPetState("idle", { speak: false });
+    }
+
+    function confidenceText(confidence) {
+      if (confidence >= 0.7) return "我听见了一些比较明显的情绪线索，但还是想请你确认。";
+      if (confidence >= 0.42) return "我不太确定，下面几种感觉哪一种更接近你？";
+      return "线索还不太够。你可以选一个接近的，也可以告诉我都不太像。";
+    }
+
+    function confirmEmotion(candidate, button) {
+      const emotion = window.XiaodengEmotionEngine.getEmotion(candidate.key);
+      if (!emotion) return;
+      emotionCandidates.querySelectorAll(".emotion-chip").forEach(item => item.classList.remove("selected"));
+      button.classList.add("selected");
+      const response = pickFromLines(emotion.responses);
+      const action = pickFromLines(emotion.actions);
+      setPetState(emotion.petState, { line: response, duration: 4200 });
+      emotionResultCopy.textContent = `你选择了“${emotion.label}”。${response}`;
+      emotionAction.innerHTML = "";
+
+      const actionCard = document.createElement("div");
+      actionCard.className = "emotion-action-card";
+      actionCard.textContent = `可以先试试：${action}`;
+      emotionAction.appendChild(actionCard);
+
+      if (emotion.dungeon) {
+        const dungeonCard = Array.from(document.querySelectorAll(".dungeon")).find(card => card.querySelector("h2")?.textContent === emotion.dungeon);
+        if (dungeonCard) {
+          const openButton = document.createElement("button");
+          openButton.className = "emotion-analyze";
+          openButton.style.marginTop = "12px";
+          openButton.textContent = `打开《${emotion.dungeon}》`;
+          openButton.addEventListener("click", () => {
+            dungeonCard.click();
+            dungeonCard.scrollIntoView({ behavior: "smooth", block: "center" });
+          });
+          emotionAction.appendChild(openButton);
+        }
+      }
+    }
+
+    function renderEmotionAnalysis(result) {
+      lastEmotionResult = result;
+      emotionCandidates.innerHTML = "";
+      emotionAction.innerHTML = "";
+      emotionResult.classList.remove("emotion-danger");
+
+      if (result.safety.level !== "normal") {
+        emotionResult.classList.add("emotion-danger");
+        emotionResultCopy.textContent = result.safety.message;
+        setPetState("comfort", { line: "请先寻找现实中的帮助。这件事不需要你一个人承担。", duration: 5200 });
+        return;
+      }
+
+      if (!result.candidates.length) {
+        emotionResultCopy.textContent = "我暂时没有找到足够明确的线索。你可以换一种说法，或者直接从天气里选一个最接近的。";
+        const unknown = document.createElement("button");
+        unknown.className = "emotion-chip";
+        unknown.textContent = "都不太像";
+        emotionCandidates.appendChild(unknown);
+        setPetState("curious", { line: "我还不太确定，可以再告诉我一点点吗？", duration: 3200 });
+        return;
+      }
+
+      const contextText = result.contexts.length ? ` 我还注意到这可能和${result.contexts.map(context => context.label).join("、")}有关。` : "";
+      const maskText = result.masks.length ? " 你用了比较克制的表达，我不会把它直接当作结论。" : "";
+      emotionResultCopy.textContent = `${confidenceText(result.confidence)}${contextText}${maskText}`;
+
+      result.candidates.forEach(candidate => {
+        const button = document.createElement("button");
+        button.className = "emotion-chip";
+        const strength = candidate.score >= 7 ? "较强" : candidate.score >= 3.5 ? "可能" : "一点";
+        button.textContent = `${candidate.label} · ${strength}`;
+        button.addEventListener("click", () => confirmEmotion(candidate, button));
+        emotionCandidates.appendChild(button);
+      });
+
+      const noneButton = document.createElement("button");
+      noneButton.className = "emotion-chip";
+      noneButton.textContent = "都不太像";
+      noneButton.addEventListener("click", () => {
+        emotionCandidates.querySelectorAll(".emotion-chip").forEach(item => item.classList.remove("selected"));
+        noneButton.classList.add("selected");
+        emotionResultCopy.textContent = "谢谢你纠正我。解释自己的权利一直属于你。可以换一种说法，或直接选择一种天气。";
+        emotionAction.innerHTML = "";
+        setPetState("idle", { line: "没关系，我会重新听。", duration: 2200 });
+      });
+      emotionCandidates.appendChild(noneButton);
+      setPetState(result.candidates[0].petState, { line: `我猜可能有一点${result.candidates[0].label}，但想先听你确认。`, duration: 3200 });
+    }
+
+    function analyzeEmotionInput() {
+      const text = emotionInput.value.trim();
+      if (!text) {
+        emotionResultCopy.textContent = "先写一句此刻最想说的话吧。";
+        setPetState("curious", { line: "哪怕只有一个词也可以。", duration: 2200 });
+        return;
+      }
+      const result = window.XiaodengEmotionEngine.analyze(text, { weather: currentWorld?.key || null });
+      renderEmotionAnalysis(result);
+    }
+
+    emotionAnalyze.addEventListener("click", analyzeEmotionInput);
+    emotionInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") analyzeEmotionInput();
+    });
+    emotionClear.addEventListener("click", resetEmotionResult);
+
+    function closePetChat() {
+      petChatPanel.classList.remove("show");
+      petChatToggle.classList.remove("open");
+    }
+
+    let lastPetChatAnalysis = null;
+
+    function addPetChatButton(label, handler, className = "") {
+      const button = document.createElement("button");
+      button.className = `pet-chat-choice ${className}`.trim();
+      button.textContent = label;
+      button.addEventListener("click", event => {
+        event.stopPropagation();
+        handler();
+      });
+      petChatChoices.appendChild(button);
+      return button;
+    }
+
+    function finishPetChatStep(message, state = "comfort") {
+      petChatReply.textContent = message;
+      petChatChoices.innerHTML = "";
+      addPetChatButton("我还想说一点", () => {
+        petChatReply.textContent = "嗯，我还在。想到哪里就说到哪里，不用整理好。";
+        petChatInput.focus();
+      }, "primary");
+      addPetChatButton("今天先这样", () => {
+        closePetChat();
+        setPetState("wave", { line: "好。今天先不用再往前走了。", returnToIdle: 2600 });
+      });
+      setPetState(state, { line: message, duration: 4800 });
+    }
+
+    function renderPetChatWriting(placeholder, completionPrefix) {
+      petChatChoices.innerHTML = "";
+      const input = document.createElement("textarea");
+      input.className = "pet-chat-followup";
+      input.maxLength = 160;
+      input.placeholder = placeholder;
+      input.addEventListener("pointerdown", event => event.stopPropagation());
+      petChatChoices.appendChild(input);
+      addPetChatButton("写好了", () => {
+        const value = input.value.trim();
+        if (!value) {
+          input.focus();
+          petChatReply.textContent = "不用写得完整，一个词也可以。";
+          return;
+        }
+        finishPetChatStep(`${completionPrefix}“${value}”\n\n嗯，我听见了。你不用急着把它变成一个答案。`);
+      }, "primary");
+      addPetChatButton("现在不想写", () => finishPetChatStep("好，那就不写。我们可以只在这里安静一会儿。"));
+      input.focus();
+    }
+
+    function renderPetChatAction(emotion, action, response) {
+      petChatChoices.innerHTML = "";
+      petChatReply.textContent = `${response}\n\n如果你愿意，我们可以试一个很小的动作：${action}`;
+
+      if (action.includes("颜色")) {
+        const colors = [
+          ["深海蓝", "#557fd8"], ["雨雾灰", "#9aa6bd"], ["晚霞紫", "#a987d8"],
+          ["微光黄", "#ffd978"], ["火苗红", "#e98273"], ["安静白", "#f3eee5"]
+        ];
+        colors.forEach(([label, color]) => {
+          const button = addPetChatButton(label, () => {
+            petChatReply.textContent = `你选了“${label}”。颜色不用解释对错，它只是帮这份感受有了形状。\n\n如果愿意，再写一句：它更像什么？`;
+            setPetState("comfort", { line: `我看见这团${label}了。`, duration: 2800 });
+            renderPetChatWriting("它更像一片云、一间房，还是一段天气……", "你说，它像");
+          }, "pet-color-choice");
+          const dot = document.createElement("span");
+          dot.className = "pet-color-dot";
+          dot.style.background = color;
+          dot.style.color = color;
+          button.prepend(dot);
+        });
+        addPetChatButton("我还选不出来", () => finishPetChatStep("选不出来也没关系。有些感受本来就是许多颜色混在一起。"));
+        return;
+      }
+
+      if (/写下|补全|一句话|记录|列出|改写|准备/.test(action)) {
+        renderPetChatWriting("不用完整，写下最先浮现的那句话……", "我听见了：");
+        return;
+      }
+
+      if (/呼吸|吸气|呼气/.test(action)) {
+        addPetChatButton("开始一轮", () => {
+          petChatReply.textContent = "吸气——慢慢数 4 下。\n停一停——数 2 下。\n呼气——慢慢数 6 下。";
+          petChatChoices.innerHTML = "";
+          addPetChatButton("完成一轮", () => finishPetChatStep("完成了。哪怕身体只松开一点点，这一轮也算数。", "idle"), "primary");
+          addPetChatButton("再来一轮", () => renderPetChatAction(emotion, action, "我们再慢一点，不需要吸得很深。"));
+          setPetState("comfort", { line: "慢慢来，我陪你数。", duration: 3600 });
+        }, "primary");
+        addPetChatButton("现在不方便", () => finishPetChatStep("没关系，我们换成把双脚踩稳地面，也算一次照顾自己。"));
+        return;
+      }
+
+      addPetChatButton("我愿意试试", () => finishPetChatStep(`好，我们只做这一小步：${action}。做不到完整也没关系。`), "primary");
+      addPetChatButton("换一个办法", () => {
+        const alternatives = emotion.actions.filter(item => item !== action);
+        renderPetChatAction(emotion, pickFromLines(alternatives.length ? alternatives : emotion.actions), "当然。这个不合适，我们就换一个，不需要勉强自己。");
+      });
+    }
+
+    function renderPetChatListening(emotion) {
+      petChatReply.textContent = "好，我先不分析，也不急着给办法。\n\n这件事里，哪一部分最让你难受？";
+      petChatChoices.innerHTML = "";
+      const input = document.createElement("textarea");
+      input.className = "pet-chat-followup";
+      input.maxLength = 180;
+      input.placeholder = "比如：最难受的是，我已经很努力了，却还是没有结果……";
+      input.addEventListener("pointerdown", event => event.stopPropagation());
+      petChatChoices.appendChild(input);
+      addPetChatButton("说给小灯听", () => {
+        const value = input.value.trim();
+        if (!value) {
+          petChatReply.textContent = "不着急。你可以只写最先冒出来的几个字。";
+          input.focus();
+          return;
+        }
+        petChatReply.textContent = `嗯，原来最难受的是——“${value}”\n\n这确实不好受。至少在这里，你不用假装它没关系。`;
+        petChatChoices.innerHTML = "";
+        addPetChatButton("我还想说", () => renderPetChatListening(emotion), "primary");
+        addPetChatButton("陪我想想办法", () => renderPetChatAction(emotion, pickFromLines(emotion.actions), "好。我们不解决全部，只看看眼前最小的一步。"));
+        addPetChatButton("先陪我待会儿", () => finishPetChatStep("好，我不催你。我们就让这盏灯亮一会儿。"));
+        setPetState("comfort", { line: "嗯，我听见了。", duration: 3200 });
+      }, "primary");
+      addPetChatButton("我还说不出来", () => finishPetChatStep("没关系。说不出来不代表它不重要，我可以先陪你待着。"));
+      input.focus();
+    }
+
+    function renderPetChatCandidates(result, message) {
+      petChatReply.textContent = message;
+      petChatChoices.innerHTML = "";
+      result.candidates.slice(0, 3).forEach(candidate => {
+        addPetChatButton(`有点${candidate.label}`, () => choosePetChatEmotion(candidate));
+      });
+      addPetChatButton("好像都不是", () => {
+        petChatReply.textContent = "好，那我不猜了。你愿意的话，可以直接告诉我你希望怎么被陪。";
+        petChatChoices.innerHTML = "";
+        addPetChatButton("听我说说", () => renderPetChatListening(window.XiaodengEmotionEngine.getEmotion(result.candidates[0]?.key || "sad")), "primary");
+        addPetChatButton("先安静一下", () => finishPetChatStep("好。我们先不说话，我把灯留在这里。", "idle"));
+      });
+    }
+
+    function choosePetChatEmotion(candidate) {
+      const emotion = window.XiaodengEmotionEngine.getEmotion(candidate.key);
+      if (!emotion) return;
+      const response = pickFromLines(emotion.responses);
+      setPetState(emotion.petState, { line: response, duration: 4600 });
+      petChatReply.textContent = `嗯，可能更接近${emotion.label}。\n\n${response}\n\n现在不用马上振作。你更希望我怎么陪你？`;
+      petChatChoices.innerHTML = "";
+      addPetChatButton("先听我说说", () => renderPetChatListening(emotion), "primary");
+      addPetChatButton("陪我理一理", () => renderPetChatAction(emotion, pickFromLines(emotion.actions), "好。我们慢一点，只看眼前这一小步。"));
+      addPetChatButton("什么都不做，陪我待会儿", () => finishPetChatStep("好，我不问了。你不用表现得没事，我就在这里。"));
+      if (lastPetChatAnalysis?.candidates?.length > 1) {
+        addPetChatButton("好像不是这种感觉", () => renderPetChatCandidates(lastPetChatAnalysis, "没关系，我可能猜偏了。下面有没有更接近一点的？"));
+      }
+    }
+
+    function analyzePetChatInput() {
+      const text = petChatInput.value.trim();
+      petChatChoices.innerHTML = "";
+      if (!text) {
+        petChatReply.textContent = "先告诉我一点点吧，哪怕只有一个词。";
+        setPetState("curious", { line: "我在听。", duration: 2000 });
+        return;
+      }
+
+      emotionInput.value = text;
+      const result = window.XiaodengEmotionEngine.analyze(text, { weather: currentWorld?.key || null });
+      lastPetChatAnalysis = result;
+      renderEmotionAnalysis(result);
+
+      if (result.safety.level !== "normal") {
+        petChatReply.textContent = result.safety.message;
+        return;
+      }
+
+      if (!result.candidates.length) {
+        petChatReply.textContent = "我还没有听懂。可以多说一点发生了什么，或者换一种说法。";
+        return;
+      }
+
+      const contextHint = result.contexts.length ? `，也许还和${result.contexts.map(item => item.label).join("、")}有关` : "";
+      renderPetChatCandidates(result, `听起来，这件事在你心里压了一会儿${contextHint}。\n\n我不想替你下结论，下面哪一种感觉更靠近现在的你？`);
+    }
+
+    petChatToggle.addEventListener("click", event => {
+      event.stopPropagation();
+      const opening = !petChatPanel.classList.contains("show");
+      petMenu.classList.remove("show");
+      if (opening) petShell.classList.toggle("chat-right", petShell.getBoundingClientRect().left < 390);
+      petChatPanel.classList.toggle("show", opening);
+      petChatToggle.classList.toggle("open", opening);
+      if (opening) {
+        petChatInput.focus();
+        setPetState("curious", { line: "我在听，慢慢说。", duration: 2200 });
+      }
+    });
+
+    petChatClose.addEventListener("click", event => {
+      event.stopPropagation();
+      closePetChat();
+    });
+
+    petChatSend.addEventListener("click", event => {
+      event.stopPropagation();
+      analyzePetChatInput();
+    });
+
+    petChatInput.addEventListener("keydown", event => {
+      event.stopPropagation();
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        analyzePetChatInput();
+      }
+    });
+
+    let currentAudio = null;
+    let fadeTimer = null;
+    let musicOn = false;
+    let currentWorld = null;
+    let weatherEffectOn = false; // 天气音效叠加层开关
+    let weatherEffectAudio = null; // 天气音效叠加层 Audio 对象
+    let currentWeatherLevel = 2; // 雨天默认中间档
+    let audioCtx = null;
+    let activeLayers = [];
+
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }
+
+    const soundscapes = {
+      home: {
+        label: "A Light Through the Fog",
+        volume: 0.64,
+        src: "assets/audio/A-Light-Through-the-Fog-v1-master.wav"
+      },
+      rain: {
+        label: "雨天音效",
+        levels: [
+          { name: "滴答", volume: 0.28, src: "assets/audio/weather-rain-drops.mp3" },
+          { name: "淅沥", volume: 0.32, src: "assets/audio/weather-rain-light.mp3" },
+          { name: "倾盆", volume: 0.35, src: "assets/audio/weather-rain-heavy.mp3" }
+        ]
+      },
+      fog: {
+        label: "雾天音效",
+        effectSrc: "assets/audio/weather-fog.wav",
+        effectVolume: 0.22
+      },
+      noise: {
+        label: "风暴音效",
+        effectSrc: "assets/audio/weather-noise.wav",
+        effectVolume: 0.25
+      },
+      empty: {
+        label: "留白音效",
+        effectSrc: "assets/audio/weather-empty.wav",
+        effectVolume: 0.18
+      },
+      fire: {
+        label: "火山音效",
+        effectSrc: "assets/audio/weather-fire.wav",
+        effectVolume: 0.25
+      },
+      tired: {
+        label: "疲惫音效",
+        effectSrc: "assets/audio/weather-tired.wav",
+        effectVolume: 0.20
+      }
+    };
+
+    // --- Web Audio API 合成层（保留备用） ---
+    const SoundLayers = {
+      thunder(ctx, masterGain) {
+        const nodes = [];
+        const bufLen = ctx.sampleRate * 2;
+        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buf;
+        noise.loop = true;
+
+        const lp = ctx.createBiquadFilter();
+        lp.type = "lowpass";
+        lp.frequency.value = 120;
+        lp.Q.value = 1;
+
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+
+        const lfo = ctx.createOscillator();
+        lfo.type = "sine";
+        lfo.frequency.value = 0.15;
+
+        const lfoGain = ctx.createGain();
+        lfoGain.gain.value = 0.8;
+
+        lfo.connect(lfoGain);
+        lfoGain.connect(gain.gain);
+        noise.connect(lp);
+        lp.connect(gain);
+        gain.connect(masterGain);
+        lfo.start();
+        noise.start();
+
+        nodes.push(noise, lp, gain, lfo, lfoGain);
+        return { nodes, stop() { gain.gain.cancelScheduledValues(ctx.currentTime); gain.gain.setValueAtTime(0, ctx.currentTime); setTimeout(() => { noise.stop(); lfo.stop(); }, 100); } };
+      },
+      heartbeat(ctx, masterGain) {
+        const nodes = [];
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.value = 40;
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+        const lfo = ctx.createOscillator();
+        lfo.type = "sine";
+        lfo.frequency.value = 1.2;
+        const lfoGain = ctx.createGain();
+        lfoGain.gain.value = 0.3;
+        lfo.connect(lfoGain);
+        lfoGain.connect(gain.gain);
+        osc.connect(gain);
+        gain.connect(masterGain);
+        lfo.start();
+        osc.start();
+        nodes.push(osc, gain, lfo, lfoGain);
+        return { nodes, stop() { gain.gain.cancelScheduledValues(ctx.currentTime); gain.gain.setValueAtTime(0, ctx.currentTime); setTimeout(() => { osc.stop(); lfo.stop(); }, 100); } };
+      },
+      wall(ctx, masterGain) {
+        const nodes = [];
+        const bufLen = ctx.sampleRate * 4;
+        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buf;
+        noise.loop = true;
+        const bp = ctx.createBiquadFilter();
+        bp.type = "bandpass";
+        bp.frequency.value = 800;
+        bp.Q.value = 0.5;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.15;
+        noise.connect(bp);
+        bp.connect(gain);
+        gain.connect(masterGain);
+        noise.start();
+        nodes.push(noise, bp, gain);
+        return { nodes, stop() { gain.gain.cancelScheduledValues(ctx.currentTime); gain.gain.setValueAtTime(0, ctx.currentTime); setTimeout(() => noise.stop(), 100); } };
+      },
+      clock(ctx, masterGain) {
+        const nodes = [];
+        const osc = ctx.createOscillator();
+        osc.type = "square";
+        osc.frequency.value = 2;
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+        const lfo = ctx.createOscillator();
+        lfo.type = "sine";
+        lfo.frequency.value = 0.5;
+        const lfoGain = ctx.createGain();
+        lfoGain.gain.value = 0.08;
+        lfo.connect(lfoGain);
+        lfoGain.connect(gain.gain);
+        osc.connect(gain);
+        gain.connect(masterGain);
+        lfo.start();
+        osc.start();
+        nodes.push(osc, gain, lfo, lfoGain);
+        return { nodes, stop() { gain.gain.cancelScheduledValues(ctx.currentTime); gain.gain.setValueAtTime(0, ctx.currentTime); setTimeout(() => { osc.stop(); lfo.stop(); }, 100); } };
+      },
+      rumble(ctx, masterGain) {
+        const nodes = [];
+        const bufLen = ctx.sampleRate * 3;
+        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buf;
+        noise.loop = true;
+        const lp = ctx.createBiquadFilter();
+        lp.type = "lowpass";
+        lp.frequency.value = 80;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.2;
+        noise.connect(lp);
+        lp.connect(gain);
+        gain.connect(masterGain);
+        noise.start();
+        nodes.push(noise, lp, gain);
+        return { nodes, stop() { gain.gain.cancelScheduledValues(ctx.currentTime); gain.gain.setValueAtTime(0, ctx.currentTime); setTimeout(() => noise.stop(), 100); } };
+      },
+      breath(ctx, masterGain) {
+        const nodes = [];
+        const bufLen = ctx.sampleRate * 4;
+        const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buf;
+        noise.loop = true;
+        const bp = ctx.createBiquadFilter();
+        bp.type = "bandpass";
+        bp.frequency.value = 400;
+        bp.Q.value = 2;
+        const gain = ctx.createGain();
+        gain.gain.value = 0;
+        const lfo = ctx.createOscillator();
+        lfo.type = "sine";
+        lfo.frequency.value = 0.25;
+        const lfoGain = ctx.createGain();
+        lfoGain.gain.value = 0.12;
+        lfo.connect(lfoGain);
+        lfoGain.connect(gain.gain);
+        noise.connect(bp);
+        bp.connect(gain);
+        gain.connect(masterGain);
+        lfo.start();
+        noise.start();
+        nodes.push(noise, bp, gain, lfo, lfoGain);
+        return { nodes, stop() { gain.gain.cancelScheduledValues(ctx.currentTime); gain.gain.setValueAtTime(0, ctx.currentTime); setTimeout(() => { noise.stop(); lfo.stop(); }, 100); } };
+      }
+    };
+
+    function startLayers(layerNames) {
+      stopLayers();
+      if (!layerNames || !layerNames.length) return;
+      const ctx = getAudioCtx();
+      const master = ctx.createGain();
+      master.gain.value = 0;
+      master.connect(ctx.destination);
+      master.gain.setValueAtTime(0, ctx.currentTime);
+      master.gain.linearRampToValueAtTime(1, ctx.currentTime + 1.5);
+
+      layerNames.forEach(name => {
+        const factory = SoundLayers[name];
+        if (factory) {
+          const layer = factory(ctx, master);
+          activeLayers.push(layer);
+        }
+      });
+    }
+
+    function stopLayers() {
+      activeLayers.forEach(l => { try { l.stop(); } catch(e) {} });
+      activeLayers = [];
+    }
+
+    function fadeAudio(audio, from, to, duration, onDone) {
+      if (fadeTimer) clearInterval(fadeTimer);
+      const started = performance.now();
+      const MAX_VOL = 0.95;
+      audio.volume = Math.max(0, Math.min(MAX_VOL, from));
+      fadeTimer = setInterval(() => {
+        const progress = Math.min(1, (performance.now() - started) / duration);
+        const eased = progress * progress * (3 - 2 * progress);
+        audio.volume = Math.max(0, Math.min(MAX_VOL, from + (to - from) * eased));
+        if (progress >= 1) {
+          clearInterval(fadeTimer);
+          fadeTimer = null;
+          if (onDone) onDone();
+        }
+      }, 32);
+    }
+
+    async function startSoundscape(key) {
+      const config = soundscapes[key] || soundscapes.home;
+      const targetVolume = config.volume || 0.64;
+      const targetSrc = config.src;
+      const previous = currentAudio;
+      const audio = new Audio(targetSrc);
+      audio.loop = true;
+      audio.preload = "auto";
+      audio.volume = 0;
+      currentAudio = audio;
+
+      try {
+        await audio.play();
+      } catch (error) {
+        currentAudio = previous;
+        musicOn = Boolean(previous && !previous.paused);
+        return;
+      }
+
+      if (previous) {
+        const previousVolume = previous.volume;
+        const started = performance.now();
+        const transition = setInterval(() => {
+          const progress = Math.min(1, (performance.now() - started) / 1100);
+          const eased = progress * progress * (3 - 2 * progress);
+          previous.volume = Math.max(0, previousVolume * (1 - eased));
+          audio.volume = Math.min(targetVolume, targetVolume * eased);
+          if (progress >= 1) {
+            clearInterval(transition);
+            previous.pause();
+            previous.src = "";
+          }
+        }, 32);
+      } else {
+        fadeAudio(audio, 0, targetVolume, 900);
+      }
+
+      musicOn = true;
+      soundBtn.textContent = key === "home" ? "♪ 主界面音乐已开启" : `♪ 正在播放：${config.label}`;
+    }
+
+    function stopSoundscape(updateButtons = true) {
+      if (currentAudio) {
+        const audio = currentAudio;
+        currentAudio = null;
+        fadeAudio(audio, audio.volume, 0, 500, () => {
+          audio.pause();
+          audio.src = "";
+        });
+      }
+      musicOn = false;
+      if (updateButtons) {
+        soundBtn.textContent = "♪ 开启主界面音乐";
+      }
+    }
+
+    // --- 天气音效叠加层（类似噪点渲染，叠加在主音乐之上） ---
+    function startWeatherEffect(weatherKey) {
+      stopWeatherEffect();
+      const config = soundscapes[weatherKey];
+      if (!config) return;
+
+      let effectSrc, effectVolume;
+      if (config.levels) {
+        const lvl = config.levels[Math.min(currentWeatherLevel, config.levels.length) - 1];
+        effectSrc = lvl.src;
+        effectVolume = lvl.volume;
+      } else {
+        effectSrc = config.effectSrc;
+        effectVolume = config.effectVolume;
+      }
+      if (!effectSrc) return;
+
+      const audio = new Audio(effectSrc);
+      audio.loop = true;
+      audio.preload = "auto";
+      audio.volume = 0;
+      weatherEffectAudio = audio;
+
+      audio.play().then(() => {
+        fadeAudio(audio, 0, effectVolume || 0.5, 1200);
+      }).catch(() => {
+        weatherEffectAudio = null;
+      });
+
+      weatherEffectOn = true;
+      const lvlLabel = config.levels ? ` · ${config.levels[currentWeatherLevel - 1].name}` : "";
+      sceneSoundBtn.textContent = `♪ ${config.label}${lvlLabel}已开启`;
+    }
+
+    function stopWeatherEffect() {
+      if (weatherEffectAudio) {
+        const audio = weatherEffectAudio;
+        weatherEffectAudio = null;
+        fadeAudio(audio, audio.volume, 0, 800, () => {
+          audio.pause();
+          audio.src = "";
+        });
+      }
+      weatherEffectOn = false;
+      if (currentWorld) {
+        const config = soundscapes[currentWorld.key];
+        sceneSoundBtn.textContent = `♪ 开启${config ? config.label : '本天气音效'}`;
+      }
+    }
+
+    function startMusic() {
+      startSoundscape("home");
+    }
+
+    function stopMusic() {
+      stopSoundscape();
+    }
+
+    soundBtn.addEventListener("click", () => {
+      if (musicOn) {
+        stopMusic();
+        setPetState("idle", { line: pickFromLines(petSituationalLines.musicOff), duration: 2400 });
+      } else {
+        startMusic();
+        setPetState("happy", { line: pickFromLines(petSituationalLines.musicOn), returnToIdle: 2600 });
+      }
+    });
+
+    function updateLevelSelector(weatherKey) {
+      const config = soundscapes[weatherKey];
+      if (!config || !config.levels) {
+        levelSelector.innerHTML = "";
+        levelSelector.classList.remove("show");
+        return;
+      }
+      levelSelector.innerHTML = "";
+      config.levels.forEach((lvl, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "level-btn" + (idx + 1 === currentWeatherLevel ? " active" : "");
+        btn.textContent = lvl.name;
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          currentWeatherLevel = idx + 1;
+          levelSelector.querySelectorAll(".level-btn").forEach((b, i) => {
+            b.classList.toggle("active", i === idx);
+          });
+          if (weatherEffectOn && currentWorld && currentWorld.key === weatherKey) {
+            startWeatherEffect(weatherKey);
+          }
+        });
+        levelSelector.appendChild(btn);
+      });
+      levelSelector.classList.add("show");
+    }
+
+    function hideLevelSelector() {
+      levelSelector.innerHTML = "";
+      levelSelector.classList.remove("show");
+    }
+
+    function openWeather(world) {
+      weatherHint.textContent = `正在进入：${world.title}。`;
+      weatherCanvas.className = `weather-canvas ${world.key}`;
+      weatherEffect.className = world.effect;
+      visualEffect.className = world.effect;
+      sceneBadge.textContent = world.badge;
+      sceneTitle.textContent = world.title;
+      sceneLine.textContent = world.line;
+      sceneSmall.textContent = world.small;
+      sceneActions.innerHTML = world.actions.map(action => `<div class="scene-action">${action}</div>`).join("");
+      weatherPage.classList.add("show");
+      currentWorld = world;
+      const weatherPetStates = {
+        rain: ["comfort", "下雨时，我把这盏光借给你。"],
+        fog: ["curious", "雾很大，我们只看脚下这一小步。"],
+        noise: ["comfort", "声音太吵时，先听一听自己的呼吸。"],
+        empty: ["sleepy", "空空的也没关系，我陪你安静一会儿。"],
+        fire: ["curious", "火很烫，我们先退后三步。"],
+        tired: ["sleepy", "今天已经走得够远啦。"]
+      };
+      const [petWeatherState, petWeatherLine] = weatherPetStates[world.key] || ["idle", "我陪你看看这里的天气。"];
+      setPetState(petWeatherState, { line: petWeatherLine, duration: 3600 });
+      // 更新音景级别选择器（只有雨天有）
+      updateLevelSelector(world.key);
+      // 进入天气时自动启动天气音效（叠加层）
+      startWeatherEffect(world.key);
+    }
+
+    // Close game overlay
+    gameClose.addEventListener("click", () => {
+      gameOverlay.classList.remove("show");
+      gameIframe.src = "";
+      /* 退出副本时恢复主界面音乐 */
+      startMusic();
+      setPetState("wave", { line: "欢迎回来，心情地图还在这里。", returnToIdle: 2200 });
+    });
+
+    backBtn.addEventListener("click", () => {
+      weatherPage.classList.remove("show");
+      currentWorld = null;
+      setPetState("wave", { line: "欢迎回来，心情地图还在这里。", returnToIdle: 2200 });
+      hideLevelSelector();
+      stopWeatherEffect();
+      // 主音乐继续播放，不需要重新启动
+    });
+
+    sceneSoundBtn.addEventListener("click", () => {
+      if (!currentWorld) return;
+      if (weatherEffectOn) stopWeatherEffect();
+      else startWeatherEffect(currentWorld.key);
+    });
+
+    weatherWorlds.forEach(world => {
+      const btn = document.createElement("button");
+      btn.className = "weather-btn";
+      btn.innerHTML = `${world.label}<span>${world.sub}</span>`;
+      btn.addEventListener("click", () => openWeather(world));
+      weatherGrid.appendChild(btn);
+    });
+
+    function renderDungeon(dungeon, card) {
+      // If this dungeon has a full interactive game, open in overlay
+      if (dungeon.game) {
+        /* 进入副本时暂停主界面音乐 */
+        stopSoundscape(false);
+        gameIframe.src = dungeon.game;
+        gameOverlay.classList.add("show");
+        var gameLine = dungeon.title === "命运之书"
+          ? "翻开书页，答案会自己浮现。"
+          : "《" + dungeon.title + "》开始了！逐字声音同步版";
+        setPetState("curious", { line: gameLine, returnToIdle: 3200 });
+        return;
+      }
+      document.querySelectorAll(".dungeon").forEach(item => item.classList.remove("active"));
+      card.classList.add("active");
+      drawer.classList.add("show");
+      setPetState("curious", { line: `《${dungeon.title}》里藏着什么呢？`, returnToIdle: 3200 });
+      storyTitle.textContent = `副本：《${dungeon.title}》`;
+      storyText.textContent = dungeon.story;
+      feedback.textContent = "选择一个回应，小灯会帮你看见选择背后的情绪需求。";
+      pills.innerHTML = "";
+      choices.innerHTML = "";
+      dungeon.choices.forEach(([label, text, tags]) => {
+        const choice = document.createElement("button");
+        choice.className = "choice";
+        choice.textContent = label;
+        choice.addEventListener("click", () => {
+          document.querySelectorAll(".choice").forEach(item => item.classList.remove("selected"));
+          choice.classList.add("selected");
+          feedback.textContent = text;
+          pills.innerHTML = tags.map(tag => `<span class="pill">${tag}</span>`).join("");
+        });
+        choices.appendChild(choice);
+      });
+      drawer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    const mapRing = document.getElementById("mapRing");
+    const ringRadius = window.innerWidth <= 420 ? 120 : window.innerWidth <= 640 ? 160 : 260; // 环形半径
+    const orbitStartTime = performance.now();
+
+    dungeons.forEach((dungeon, index) => {
+      const card = document.createElement("article");
+      card.className = "dungeon";
+      card.style.animationDelay = `${index * 0.12}s`;
+      card.innerHTML = `<div class="card-content"><div class="icon">${dungeon.icon}</div><h2>${dungeon.title}</h2><p>${dungeon.desc}</p></div>`;
+      card.addEventListener("click", () => renderDungeon(dungeon, card));
+      mapRing.appendChild(card);
+
+      // 计算环形位置：均匀分布在圆周上
+      const baseAngle = (index / dungeons.length) * Math.PI * 2 - Math.PI / 2; // 从顶部开始
+      const x = Math.cos(baseAngle) * ringRadius;
+      const y = Math.sin(baseAngle) * ringRadius;
+
+      // 设置卡片位置（使用 CSS 变量）
+      card.style.setProperty('--ring-x', `${x}px`);
+      card.style.setProperty('--ring-y', `${y}px`);
+      card.style.setProperty('--card-scale', '0');
+
+      // 触发弹跳入场动画
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          card.classList.add("bounce-in");
+          // 动画结束后移除动画类，让 JS 接管位置控制
+          setTimeout(() => {
+            card.classList.remove("bounce-in");
+            card.style.opacity = '1';
+            card.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+            // 开始围绕中心点公转动画
+            startOrbitAnimation(card, baseAngle, ringRadius);
+          }, 800 + index * 120);
+        });
+      });
+    });
+
+    // 卡片围绕中心点公转动画（卡片自身不旋转）
+    function startOrbitAnimation(card, baseAngle, radius) {
+      const duration = 30000; // 30秒一圈
+      
+      function animate(now) {
+        const elapsed = now - orbitStartTime;
+        const progress = (elapsed % duration) / duration;
+        const currentAngle = baseAngle + progress * Math.PI * 2;
+        
+        const x = Math.cos(currentAngle) * radius;
+        const y = Math.sin(currentAngle) * radius;
+        
+        card.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+        
+        requestAnimationFrame(animate);
+      }
+      
+      requestAnimationFrame(animate);
+    }
+
+    /* ── 小灯卡片 3D Tilt + 双击翻转 ── */
+    (function initTiltAndFlip() {
+      const card = document.getElementById("introImageCard");
+      const cardInner = document.getElementById("cardInner");
+      if (!card || !cardInner) return;
+
+      let isFlipped = false;
+
+      /* ── 双击翻转 ── */
+      card.addEventListener("dblclick", (e) => {
+        e.preventDefault();
+        isFlipped = !isFlipped;
+        cardInner.classList.toggle("flipped", isFlipped);
+        /* 翻转时回正 tilt */
+        target.rx = 0;
+        target.ry = 0;
+        target.s = 1;
+        card.style.transform = "";
+      });
+
+      /* ── 3D Tilt ── */
+      const maxTilt = 12;
+      const scale = 1.03;
+      const speed = 0.15;
+      let current = { rx: 0, ry: 0, s: 1 };
+      let target = { rx: 0, ry: 0, s: 1 };
+      let raf = null;
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function animate() {
+        if (isFlipped) {
+          /* 翻转状态下不回正，保持静止 */
+          current.rx = lerp(current.rx, 0, speed);
+          current.ry = lerp(current.ry, 0, speed);
+          current.s = lerp(current.s, 1, speed);
+          card.style.transform = `perspective(800px) rotateX(${current.rx}deg) rotateY(${current.ry}deg) scale3d(${current.s},${current.s},1)`;
+          if (Math.abs(current.rx) > 0.05 || Math.abs(current.ry) > 0.05 || Math.abs(current.s - 1) > 0.001) {
+            raf = requestAnimationFrame(animate);
+          } else {
+            card.style.transform = "";
+            raf = null;
+          }
+          return;
+        }
+        current.rx = lerp(current.rx, target.rx, speed);
+        current.ry = lerp(current.ry, target.ry, speed);
+        current.s = lerp(current.s, target.s, speed);
+        card.style.transform = `perspective(800px) rotateX(${current.rx}deg) rotateY(${current.ry}deg) scale3d(${current.s},${current.s},1)`;
+        if (Math.abs(current.rx - target.rx) > 0.05 || Math.abs(current.ry - target.ry) > 0.05 || Math.abs(current.s - target.s) > 0.001) {
+          raf = requestAnimationFrame(animate);
+        } else {
+          raf = null;
+        }
+      }
+
+      function startLoop() {
+        if (!raf) raf = requestAnimationFrame(animate);
+      }
+
+      card.addEventListener("mouseenter", () => {
+        if (isFlipped) return;
+        target.s = scale;
+        startLoop();
+      });
+
+      card.addEventListener("mousemove", (e) => {
+        if (isFlipped) return;
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        target.rx = -y * maxTilt * 2;
+        target.ry = x * maxTilt * 2;
+        startLoop();
+      });
+
+      card.addEventListener("mouseleave", () => {
+        target.rx = 0;
+        target.ry = 0;
+        target.s = 1;
+        startLoop();
+      });
+
+      card.addEventListener("touchmove", (e) => {
+        if (isFlipped) return;
+        e.preventDefault();
+        const rect = card.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = (touch.clientX - rect.left) / rect.width - 0.5;
+        const y = (touch.clientY - rect.top) / rect.height - 0.5;
+        target.rx = -y * maxTilt * 2;
+        target.ry = x * maxTilt * 2;
+        target.s = scale;
+        startLoop();
+      }, { passive: false });
+
+      card.addEventListener("touchend", () => {
+        target.rx = 0;
+        target.ry = 0;
+        target.s = 1;
+        startLoop();
+      });
+    })();
+
+    /* ── 页面加载完成后尝试自动播放背景音乐 ── */
+    setTimeout(function() {
+      if (!musicOn) {
+        startMusic();
+        if (!musicOn) {
+          /* 自动播放被浏览器拦截，等待用户首次交互后启动 */
+          var handler = function() {
+            if (!musicOn) startMusic();
+          };
+          document.addEventListener('click', handler, { once: true });
+          document.addEventListener('touchstart', handler, { once: true });
+          document.addEventListener('keydown', handler, { once: true });
+        }
+      }
+    }, 600);
+  </script>
+</body>
+</html>
+
+
+
+
+
+

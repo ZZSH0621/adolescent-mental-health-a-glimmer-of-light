@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>心情副本 - 小灯的一页</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-1:#0d1324;--bg-2:#18223d;--bg-3:#2a3358;
+  --text:#f8f3e8;--muted:rgba(248,243,232,0.72);
+  --line:rgba(255,255,255,0.14);--card:rgba(255,255,255,0.1);
+  --card-strong:rgba(255,255,255,0.18);
+  --gold:#ffd978;--lamp:#ffe16d;--mint:#a8f0d8;
+  --blue:#9dc6ff;--pink:#ffb8d0;--purple:#cab6ff;
+  --shadow:0 28px 90px rgba(0,0,0,0.42);
+}
+html{font-size:16px}
+body{
+  font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',sans-serif;
+  background:var(--bg-1);color:var(--text);min-height:100vh;
+  overflow-x:hidden;line-height:1.7;
+}
+
+canvas#starfield{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+.page{
+  position:relative;z-index:1;min-height:100vh;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 24px;opacity:0;transition:opacity .6s ease;
+}
+.page.active{display:flex;opacity:1}
+
+.entry-badge{
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--lamp));
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;margin-bottom:24px;
+  box-shadow:0 0 40px rgba(255,217,120,0.3);
+  animation:floatBadge 3s ease-in-out infinite;
+}
+@keyframes floatBadge{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.entry-title{
+  font-size:clamp(2rem,5vw,3.2rem);font-weight:800;
+  background:linear-gradient(135deg,var(--gold),var(--lamp),var(--mint));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;margin-bottom:8px;
+}
+.entry-subtitle{font-size:1.1rem;color:var(--muted);margin-bottom:40px;text-align:center}
+
+/* Book cover on entry - uses first frame image */
+.book-cover-wrap{
+  position:relative;margin-bottom:36px;
+}
+.book-cover-img{
+  width:260px;height:auto;border-radius:12px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 40px rgba(255,217,120,0.15);
+  cursor:pointer;
+  transition:transform .4s ease,box-shadow .4s ease;
+  animation:floatBook 4s ease-in-out infinite;
+}
+.book-cover-img:hover{
+  transform:translateY(-8px) scale(1.03);
+  box-shadow:0 28px 80px rgba(0,0,0,0.6),0 0 60px rgba(255,217,120,0.25);
+}
+@keyframes floatBook{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-6px)}
+}
+
+.question-area{
+  width:100%;max-width:420px;margin-bottom:32px;
+}
+.question-label{
+  font-size:.85rem;color:var(--muted);margin-bottom:12px;text-align:center;
+}
+.question-input-wrap{position:relative}
+.question-input{
+  width:100%;padding:16px 20px;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:16px;color:var(--text);font-size:1rem;
+  font-family:inherit;outline:none;
+  transition:border-color .3s,box-shadow .3s;
+}
+.question-input::placeholder{color:rgba(248,243,232,0.35)}
+.question-input:focus{
+  border-color:var(--gold);
+  box-shadow:0 0 20px rgba(255,217,120,0.15);
+}
+.question-hint{
+  font-size:.75rem;color:var(--muted);margin-top:8px;text-align:center;opacity:.6;
+}
+
+.btn-start{
+  background:linear-gradient(135deg,var(--gold),var(--lamp));
+  color:var(--bg-1);font-size:1.1rem;font-weight:700;
+  padding:16px 48px;border:none;border-radius:50px;cursor:pointer;
+  box-shadow:0 4px 24px rgba(255,217,120,0.35);
+  transition:transform .2s,box-shadow .2s;
+}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(255,217,120,0.5)}
+.btn-start:active{transform:translateY(0)}
+
+/* ===== Book Scene with Video ===== */
+.book-scene{
+  width:100%;max-width:600px;display:flex;flex-direction:column;align-items:center;gap:28px;
+}
+
+/* Video container for page flip animation */
+.video-book-container{
+  position:relative;width:100%;max-width:500px;
+  aspect-ratio:3/4;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  transition:transform 1.2s cubic-bezier(0.4,0,0.2,1), max-width 1.2s cubic-bezier(0.4,0,0.2,1);
+}
+/* Zoom in effect after flip */
+.video-book-container.zoomed{
+  transform:scale(1.35);
+  max-width:380px;
+}
+
+/* The video element */
+.flip-video{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+/* Static image fallback / end frame */
+.book-end-frame{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  opacity:0;
+  transition:opacity .3s ease;
+}
+.book-end-frame.show{opacity:1}
+
+/* Answer text - appears written on the right page of the book */
+.page-overlay{
+  position:absolute;
+  /* Centered on right page, with left padding to avoid spine */
+  top:15%;left:18%;right:14%;bottom:25%;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  pointer-events:none;
+  z-index:10;
+}
+.page-category{
+  font-size:.6rem;
+  color:rgba(180,150,100,0.45);
+  letter-spacing:4px;text-transform:uppercase;
+  margin-bottom:24px;
+  opacity:0;transition:opacity .6s ease;
+  font-family:'PingFang SC',sans-serif;
+}
+.page-category.show{opacity:1}
+
+/* Main answer text with magical reveal effect */
+.page-answer{
+  font-size:clamp(1.6rem,5vw,2.2rem);
+  font-weight:600;
+  /* Darker ink color for better readability on aged paper */
+  color:#3a2510;
+  line-height:2;
+  /* Multi-layer text shadow for depth on paper */
+  text-shadow:
+    0 0 8px rgba(255,217,120,0.35),
+    0 0 20px rgba(255,217,120,0.12),
+    0 1px 2px rgba(60,40,20,0.4);
+  opacity:0;
+  font-family:'PingFang SC','Noto Serif SC','STSong',serif;
+  position:relative;
+  /* Each character will be animated individually via JS */
+}
+.page-answer.show{
+  opacity:1;
+}
+/* Individual character animation */
+.page-answer .char{
+  display:inline-block;
+  opacity:0;
+  transform:translateY(12px) scale(0.8);
+  filter:blur(4px);
+  animation:charReveal 0.6s ease forwards;
+}
+/* Punctuation stays with previous character, no line break */
+.page-answer .char.punct{
+  margin-left:-0.25em;
+  white-space:nowrap;
+}
+@keyframes charReveal{
+  0%{
+    opacity:0;
+    transform:translateY(12px) scale(0.8);
+    filter:blur(4px);
+    text-shadow:0 0 20px rgba(255,217,120,0.8), 0 0 40px rgba(255,217,120,0.4);
+  }
+  50%{
+    opacity:0.8;
+    transform:translateY(-2px) scale(1.05);
+    filter:blur(1px);
+    text-shadow:0 0 15px rgba(255,217,120,0.6), 0 0 30px rgba(255,217,120,0.3);
+  }
+  100%{
+    opacity:1;
+    transform:translateY(0) scale(1);
+    filter:blur(0);
+    text-shadow:
+      0 0 8px rgba(255,217,120,0.4),
+      0 0 20px rgba(255,217,120,0.15),
+      0 1px 2px rgba(90,61,32,0.3);
+  }
+}
+
+/* Golden sparkle particles around text */
+.page-answer::before,
+.page-answer::after{
+  content:'✦';
+  position:absolute;
+  font-size:10px;
+  color:rgba(255,217,120,0.7);
+  opacity:0;
+  animation:sparkle 2s ease-in-out infinite;
+  pointer-events:none;
+}
+.page-answer::before{
+  top:-15px;left:10%;
+  animation-delay:0.5s;
+}
+.page-answer::after{
+  bottom:-15px;right:10%;
+  animation-delay:1.2s;
+}
+@keyframes sparkle{
+  0%,100%{opacity:0;transform:scale(0.5) rotate(0deg)}
+  30%{opacity:1;transform:scale(1.2) rotate(90deg)}
+  60%{opacity:0.6;transform:scale(0.8) rotate(180deg)}
+}
+
+/* Page number - bottom of right page */
+.page-number-display{
+  position:absolute;
+  bottom:15%;left:50%;transform:translateX(-50%);
+  font-size:.75rem;color:rgba(180,150,100,0.35);
+  font-family:Georgia,'Noto Serif SC',serif;
+  opacity:0;transition:opacity .5s ease .3s;
+  z-index:10;
+  letter-spacing:2px;
+}
+.page-number-display.show{opacity:1}
+
+/* Hide click hint when zoomed */
+.video-book-container.zoomed .click-hint{
+  opacity:0;
+}
+
+/* Click hint on video */
+.click-hint{
+  position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+  font-size:.8rem;color:rgba(255,255,255,0.5);
+  background:rgba(0,0,0,0.3);
+  padding:6px 16px;border-radius:20px;
+  opacity:0;transition:opacity .3s ease;
+  pointer-events:none;z-index:20;
+}
+.video-book-container:hover .click-hint{
+  opacity:1;
+}
+
+.question-display{
+  font-size:1rem;color:var(--muted);text-align:center;
+  max-width:400px;line-height:1.6;
+  padding:14px 20px;background:var(--card);border-radius:12px;
+  border:1px solid var(--line);
+}
+.question-display .q-label{font-size:.75rem;color:var(--gold);margin-bottom:4px}
+.question-display .q-text{color:var(--text);font-style:italic}
+
+.action-buttons{
+  display:flex;gap:16px;flex-wrap:wrap;justify-content:center;
+}
+.btn-action{
+  padding:12px 28px;border-radius:24px;font-size:.95rem;
+  font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s;
+  border:none;font-family:inherit;
+}
+.btn-action:hover{transform:translateY(-2px)}
+.btn-primary{
+  background:linear-gradient(135deg,var(--gold),var(--lamp));
+  color:var(--bg-1);box-shadow:0 4px 16px rgba(255,217,120,0.3);
+}
+.btn-primary:hover{box-shadow:0 8px 24px rgba(255,217,120,0.4)}
+.btn-secondary{
+  background:var(--card-strong);color:var(--text);
+  border:1px solid var(--line);
+}
+
+.lamp-message{
+  font-size:.9rem;color:var(--muted);text-align:center;
+  max-width:360px;line-height:1.8;
+}
+.lamp-message .lamp-name{color:var(--lamp);font-weight:600}
+
+.book-glow-wrap{
+  position:relative;
+}
+.book-glow-wrap::before{
+  content:'';position:absolute;inset:-30px;
+  background:radial-gradient(circle,rgba(255,217,120,0.12),transparent 70%);
+  opacity:0;transition:opacity .5s ease;
+  pointer-events:none;z-index:-1;
+}
+.book-glow-wrap:hover::before{opacity:1}
+
+@media(max-width:480px){
+  .book-cover-img{width:200px}
+  .video-book-container{max-width:340px}
+  .page-answer{font-size:1.4rem}
+  .entry-title{font-size:2rem}
+  .page-overlay{top:15%;left:50%;right:8%;bottom:18%}
+}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+
+<!-- Entry Page -->
+<div class="page active" id="page-entry">
+  <div class="entry-badge">&#x1F4A1;</div>
+  <h1 class="entry-title">小灯的一页</h1>
+  <p class="entry-subtitle">心里想着一个问题，翻开小灯的书</p>
+
+  <div class="book-glow-wrap">
+    <img src="首帧frame-12.png" alt="小灯的书" class="book-cover-img" id="book-cover-img">
+  </div>
+
+  <div class="question-area">
+    <div class="question-label">你心里在想什么问题？</div>
+    <div class="question-input-wrap">
+      <input type="text" class="question-input" id="question-input"
+        placeholder="例如：明天应该去吗..." maxlength="50">
+    </div>
+    <div class="question-hint">这个问题只有你自己能看到，小灯不会知道</div>
+  </div>
+
+  <button class="btn-start" id="btn-start">翻开小灯的书</button>
+</div>
+
+<!-- Book Page with Video -->
+<div class="page" id="page-book">
+  <div class="book-scene">
+    <div class="question-display" id="question-display" style="display:none">
+      <div class="q-label">你的问题</div>
+      <div class="q-text" id="q-text"></div>
+    </div>
+
+    <div class="video-book-container" id="video-book">
+      <!-- Combined video: flip + zoom -->
+      <video class="flip-video" id="flip-video" playsinline preload="auto">
+        <source src="命运之书翻页转场成片.mp4" type="video/mp4">
+      </video>
+      <!-- End frame image (shown after video ends) -->
+      <img src="中间帧frame-01.png" alt="书页" class="book-end-frame" id="book-end-frame">
+      <!-- Answer overlay -->
+      <div class="page-overlay">
+        <div class="page-category" id="page-category"></div>
+        <div class="page-answer" id="page-answer"></div>
+      </div>
+      <!-- Page number -->
+      <div class="page-number-display" id="page-number-display"></div>
+      <!-- Click hint -->
+      <div class="click-hint">点击书页再翻一次</div>
+    </div>
+
+    <div class="lamp-message" id="lamp-message">
+      <span class="lamp-name">小灯：</span>"答案不针对你的问题，但它会在你需要的时候出现。"
+    </div>
+
+    <div class="action-buttons" id="action-buttons" style="display:none">
+      <button class="btn-action btn-primary" id="btn-flip-again">再翻一次</button>
+      <button class="btn-action btn-secondary" id="btn-back">返回</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===== ANSWER DATABASE ===== */
+var ANSWERS = [
+  {text:"毫无疑问。",category:"肯定"},
+  {text:"肯定的。",category:"肯定"},
+  {text:"去吧，风会帮你。",category:"肯定"},
+  {text:"这正是你需要的。",category:"肯定"},
+  {text:"星光已为你铺好路。",category:"肯定"},
+  {text:"大胆去做，天不会塌。",category:"肯定"},
+  {text:"会比你想象的更好。",category:"肯定"},
+  {text:"就是现在。",category:"肯定"},
+  {text:"你值得。",category:"肯定"},
+  {text:"放手一搏。",category:"肯定"},
+  {text:"一切都在帮你。",category:"肯定"},
+  {text:"答案在你心里，它是\"是\"。",category:"肯定"},
+  {text:"不。",category:"否定"},
+  {text:"还不是时候。",category:"否定"},
+  {text:"先放一放。",category:"否定"},
+  {text:"这条路暂时不通。",category:"否定"},
+  {text:"答案在别处。",category:"否定"},
+  {text:"再等等看。",category:"否定"},
+  {text:"不必勉强。",category:"否定"},
+  {text:"现在不适合。",category:"否定"},
+  {text:"停下来，比继续更需要勇气。",category:"否定"},
+  {text:"有些门，没开也是一种答案。",category:"否定"},
+  {text:"等等。",category:"时间"},
+  {text:"明天再说。",category:"时间"},
+  {text:"很快。",category:"时间"},
+  {text:"给时间一点时间。",category:"时间"},
+  {text:"现在。",category:"时间"},
+  {text:"三个月后再回头看。",category:"时间"},
+  {text:"等到花开的时候。",category:"时间"},
+  {text:"今夜之后。",category:"时间"},
+  {text:"不必着急，该来的会来。",category:"时间"},
+  {text:"在下一个转角。",category:"时间"},
+  {text:"当你准备好的时候。",category:"时间"},
+  {text:"日落之前。",category:"时间"},
+  {text:"换个角度看看。",category:"建议"},
+  {text:"放轻松，慢慢来。",category:"建议"},
+  {text:"大胆一点。",category:"建议"},
+  {text:"听听你心里的声音。",category:"建议"},
+  {text:"先照顾好自己。",category:"建议"},
+  {text:"从最小的一步开始。",category:"建议"},
+  {text:"问问你信任的人。",category:"建议"},
+  {text:"写下来，你会看得更清楚。",category:"建议"},
+  {text:"睡一觉再想。",category:"建议"},
+  {text:"去散步，让风吹散思绪。",category:"建议"},
+  {text:"试着说\"我不知道\"。",category:"建议"},
+  {text:"把\"应该\"换成\"想要\"。",category:"建议"},
+  {text:"回头看看来时的路。",category:"建议"},
+  {text:"给自己倒一杯水，先。",category:"建议"},
+  {text:"会很顺利。",category:"结果"},
+  {text:"会有意想不到的收获。",category:"结果"},
+  {text:"会付出代价，但值得。",category:"结果"},
+  {text:"结果会让你微笑。",category:"结果"},
+  {text:"可能和你想的不一样。",category:"结果"},
+  {text:"会有贵人相助。",category:"结果"},
+  {text:"过程比结果更重要。",category:"结果"},
+  {text:"你会庆幸自己没放弃。",category:"结果"},
+  {text:"一切都会过去。",category:"结果"},
+  {text:"你会成为更好的自己。",category:"结果"},
+  {text:"不用担心。",category:"态度"},
+  {text:"没关系。",category:"态度"},
+  {text:"这是必然的，接纳它。",category:"态度"},
+  {text:"管它呢。",category:"态度"},
+  {text:"你已经做得很好了。",category:"态度"},
+  {text:"不完美也没关系。",category:"态度"},
+  {text:"允许自己难过。",category:"态度"},
+  {text:"这不是你的错。",category:"态度"},
+  {text:"慢慢来，没人催你。",category:"态度"},
+  {text:"你不需要知道所有答案。",category:"态度"},
+  {text:"迷茫也是路的一部分。",category:"态度"},
+  {text:"休息不是放弃。",category:"态度"},
+  {text:"答案就在你身边。",category:"隐藏"},
+  {text:"忽略了一件显而易见的事。",category:"隐藏"},
+  {text:"你其实已经知道答案了。",category:"隐藏"},
+  {text:"这件事三年后还重要吗？",category:"隐藏"},
+  {text:"有人在默默支持你。",category:"隐藏"},
+  {text:"这不是结束，是开始。",category:"隐藏"},
+  {text:"你比想象中更强大。",category:"隐藏"},
+  {text:"答案在下一页。",category:"隐藏"},
+  {text:"闭上眼睛，深呼吸。",category:"隐藏"},
+  {text:"小灯也在为你加油。",category:"隐藏"}
+];
+
+var LAMP_MESSAGES = [
+  "答案不针对你的问题，但它会在你需要的时候出现。",
+  "有时候，答案的意义不在于它说了什么，而在于你听到它的那一刻。",
+  "小灯不能替你决定，但它可以陪你一起想。",
+  "这一页不是终点，只是你路上的一盏灯。",
+  "不管答案是什么，你都已经很勇敢了。",
+  "有些答案，需要时间来懂。",
+  "小灯相信，你会找到属于自己的路。",
+  "这一页翻过去了，下一页还在等你。"
+];
+
+/* ===== STATE ===== */
+var currentQuestion = '';
+var isFlipping = false;
+
+/* ===== DOM REFS ===== */
+var pageEntry = document.getElementById('page-entry');
+var pageBook = document.getElementById('page-book');
+var btnStart = document.getElementById('btn-start');
+var questionInput = document.getElementById('question-input');
+var bookCoverImg = document.getElementById('book-cover-img');
+var flipVideo = document.getElementById('flip-video');
+var bookEndFrame = document.getElementById('book-end-frame');
+var videoBook = document.getElementById('video-book');
+var pageAnswer = document.getElementById('page-answer');
+var pageCategory = document.getElementById('page-category');
+var pageNumberDisplay = document.getElementById('page-number-display');
+var questionDisplay = document.getElementById('question-display');
+var qText = document.getElementById('q-text');
+var lampMessage = document.getElementById('lamp-message');
+var actionButtons = document.getElementById('action-buttons');
+var btnFlipAgain = document.getElementById('btn-flip-again');
+var btnBack = document.getElementById('btn-back');
+
+/* ===== STARFIELD ===== */
+(function initStarfield(){
+  var canvas = document.getElementById('starfield');
+  var ctx = canvas.getContext('2d');
+  var stars = [];
+  var count = 120;
+
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for(var i = 0; i < count; i++){
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.5 + 0.3,
+      a: Math.random(),
+      speed: Math.random() * 0.005 + 0.002,
+      dir: Math.random() > 0.5 ? 1 : -1
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for(var i = 0; i < stars.length; i++){
+      var s = stars[i];
+      s.a += s.speed * s.dir;
+      if(s.a >= 1 || s.a <= 0.1) s.dir *= -1;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(248,243,232,' + s.a + ')';
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ===== PAGE TRANSITIONS ===== */
+function showPage(page){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  page.classList.add('active');
+}
+
+/* ===== RANDOM ANSWER ===== */
+function getRandomAnswer(){
+  return ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
+}
+
+function getRandomLampMessage(){
+  return LAMP_MESSAGES[Math.floor(Math.random() * LAMP_MESSAGES.length)];
+}
+
+/* ===== VIDEO FLIP ===== */
+function playFlipVideo(){
+  if(isFlipping) return;
+  isFlipping = true;
+
+  // Hide previous answer
+  pageAnswer.classList.remove('show');
+  pageCategory.classList.remove('show');
+  pageNumberDisplay.classList.remove('show');
+  actionButtons.style.display = 'none';
+  bookEndFrame.classList.remove('show');
+  videoBook.classList.remove('zoomed');
+
+  // Show video
+  flipVideo.style.display = 'block';
+  flipVideo.currentTime = 0;
+
+  // Play video
+  var playPromise = flipVideo.play();
+  if(playPromise !== undefined){
+    playPromise.catch(function(error){
+      console.log('Video play failed:', error);
+      showEndFrame();
+    });
+  }
+}
+
+function showEndFrame(){
+  // Hide video, show end frame
+  flipVideo.style.display = 'none';
+  bookEndFrame.classList.add('show');
+  showAnswer();
+}
+
+// Video ended -> pause on last frame, show answer
+flipVideo.addEventListener('ended', function(){
+  flipVideo.pause();
+  flipVideo.currentTime = flipVideo.duration - 0.05;
+  showAnswer();
+});
+
+function showAnswer(){
+  var answer = getRandomAnswer();
+  var pageNum = Math.floor(Math.random() * 200) + 1;
+
+  // Wrap each character in a span for individual animation
+  var text = answer.text;
+  var html = '';
+  var puncts = '\uff0c\u3002\uff01\uff1f\u3001\uff1b\uff1a\u201c\u201d\u2018\u2019\u2026\u2014';
+  var charIdx = 0;
+  for(var i = 0; i < text.length; i++){
+    var ch = text[i];
+    var isPunct = puncts.indexOf(ch) !== -1;
+    if(isPunct && html.length > 0){
+      // Append punct to previous span content to prevent line break
+      var safe = ch.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      var pos = html.lastIndexOf('</span>');
+      html = html.slice(0, pos) + safe + html.slice(pos);
+    } else {
+      var delay = 0.3 + charIdx * 0.17;
+      var safe = ch.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      if(ch === ' '){
+        html += '<span class="char" style="animation-delay:' + delay + 's">&nbsp;</span>';
+      } else {
+        html += '<span class="char" style="animation-delay:' + delay + 's">' + safe + '</span>';
+      }
+      charIdx++;
+    }
+  }
+  pageAnswer.innerHTML = html;
+
+  pageCategory.textContent = answer.category;
+  pageNumberDisplay.textContent = '— ' + pageNum + ' —';
+
+  // Show category first
+  setTimeout(function(){
+    pageCategory.classList.add('show');
+  }, 200);
+  // Trigger character animations
+  setTimeout(function(){
+    pageAnswer.classList.add('show');
+  }, 500);
+  // Show page number after all chars
+  var totalCharTime = 0.3 + text.length * 0.17 + 0.6;
+  setTimeout(function(){
+    pageNumberDisplay.classList.add('show');
+  }, totalCharTime * 1000 + 200);
+
+  // Update lamp message
+  lampMessage.innerHTML = '<span class="lamp-name">小灯：</span>"' + getRandomLampMessage() + '"';
+
+  // Show buttons
+  setTimeout(function(){
+    actionButtons.style.display = 'flex';
+    isFlipping = false;
+  }, totalCharTime * 1000 + 600);
+}
+
+/* ===== EVENTS ===== */
+btnStart.addEventListener('click', function(){
+  currentQuestion = questionInput.value.trim();
+
+  if(currentQuestion){
+    qText.textContent = currentQuestion;
+    questionDisplay.style.display = 'block';
+  } else {
+    questionDisplay.style.display = 'none';
+  }
+
+  showPage(pageBook);
+
+  // Auto play flip video after transition
+  setTimeout(function(){
+    playFlipVideo();
+  }, 500);
+});
+
+// Click on cover to start
+bookCoverImg.addEventListener('click', function(){
+  btnStart.click();
+});
+
+// Click on video area to flip again
+videoBook.addEventListener('click', function(){
+  if(!isFlipping){
+    playFlipVideo();
+  }
+});
+
+btnFlipAgain.addEventListener('click', function(e){
+  e.stopPropagation();
+  playFlipVideo();
+});
+
+btnBack.addEventListener('click', function(e){
+  e.stopPropagation();
+  // Reset
+  flipVideo.pause();
+  flipVideo.currentTime = 0;
+  flipVideo.style.display = 'block';
+  bookEndFrame.classList.remove('show');
+  videoBook.classList.remove('zoomed');
+  pageAnswer.classList.remove('show');
+  pageCategory.classList.remove('show');
+  pageNumberDisplay.classList.remove('show');
+  actionButtons.style.display = 'none';
+  questionInput.value = '';
+  currentQuestion = '';
+  showPage(pageEntry);
+});
+
+// Enter key to start
+questionInput.addEventListener('keypress', function(e){
+  if(e.key === 'Enter'){
+    btnStart.click();
+  }
+});
+
+// Preload video
+flipVideo.load();
+
+})();
+</script>
+</body>
+</html>
