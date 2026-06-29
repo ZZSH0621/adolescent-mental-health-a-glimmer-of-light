@@ -104,7 +104,7 @@
     .sound-btn,
     .back-btn {
       cursor: pointer;
-      transition: transform .2s ease, background .2s ease, color .2s ease;
+      transition: transform .2s ease, background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
     }
 
     .sound-btn:hover,
@@ -112,6 +112,20 @@
       transform: translateY(-2px);
       background: rgba(255,255,255,0.14);
       color: var(--text);
+    }
+
+    .sound-btn {
+      color: #ffe6a3;
+      border-color: rgba(255,217,120,.42);
+      box-shadow: 0 0 22px rgba(255,217,120,.14);
+      font-weight: 700;
+    }
+
+    .sound-btn.is-playing {
+      color: #09101f;
+      background: linear-gradient(135deg, #ffe59a, #ffbd66);
+      border-color: rgba(255,232,160,.78);
+      box-shadow: 0 0 30px rgba(255,191,88,.28);
     }
 
     /* 音景级别选择器 */
@@ -1055,6 +1069,33 @@
   border: none;
 }
 
+.game-caption {
+  position: absolute;
+  left: 50%;
+  top: 68px;
+  z-index: 31;
+  max-width: min(760px, calc(100vw - 40px));
+  transform: translateX(-50%) translateY(-8px);
+  opacity: 0;
+  pointer-events: none;
+  border: 1px solid rgba(255,217,120,.28);
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: rgba(9,16,31,.68);
+  color: #ffe6a3;
+  box-shadow: 0 18px 60px rgba(0,0,0,.26);
+  backdrop-filter: blur(18px);
+  font-size: clamp(.86rem, 1.6vw, 1rem);
+  letter-spacing: .04em;
+  transition: opacity .28s ease, transform .28s ease;
+  text-align: center;
+}
+
+.game-caption.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
     @keyframes appear {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -1970,6 +2011,7 @@
     <!-- 完整游戏 iframe 弹层 -->
     <section class="game-overlay" id="gameOverlay">
       <button class="game-close" id="gameClose">← 回到心情地图</button>
+      <div class="game-caption" id="gameCaption" aria-live="polite"></div>
       <iframe id="gameIframe" src="" title="完整副本" allow="autoplay"></iframe>
     </section>
 
@@ -2193,6 +2235,7 @@
     const gameOverlay = document.getElementById("gameOverlay");
     const gameIframe = document.getElementById("gameIframe");
     const gameClose = document.getElementById("gameClose");
+    const gameCaption = document.getElementById("gameCaption");
     const soundBtn = document.getElementById("soundBtn");
     const sceneSoundBtn = document.getElementById("sceneSoundBtn");
     const levelSelector = document.getElementById("levelSelector");
@@ -2401,13 +2444,51 @@
       petBubbleTimer = setTimeout(() => petBubble.classList.remove("show"), duration);
     }
 
+    function showPetBubbleTyped(text, duration = 4200, speed = 46) {
+      clearTimeout(petBubbleTimer);
+      petBubble.textContent = "";
+      petBubble.classList.add("show");
+      let index = 0;
+      function typeNext() {
+        petBubble.textContent = text.slice(0, index);
+        if (index <= text.length) {
+          index += 1;
+          petBubbleTimer = setTimeout(typeNext, speed);
+        } else {
+          petBubbleTimer = setTimeout(() => petBubble.classList.remove("show"), duration);
+        }
+      }
+      typeNext();
+    }
+
+    function showGameCaptionTyped(text, duration = 3800, speed = 42) {
+      if (!gameCaption) return;
+      gameCaption.textContent = "";
+      gameCaption.classList.add("show");
+      let index = 0;
+      function typeNext() {
+        gameCaption.textContent = text.slice(0, index);
+        if (index <= text.length) {
+          index += 1;
+          setTimeout(typeNext, speed);
+        } else {
+          setTimeout(() => gameCaption.classList.remove("show"), duration);
+        }
+      }
+      typeNext();
+    }
+
     function setPetState(state, options = {}) {
       if (!petStates[state]) state = "idle";
       petState = state;
       petImage.src = petStates[state].src;
       petShell.classList.remove("happy", "curious", "sleepy", "wave", "comfort");
       if (state !== "idle") petShell.classList.add(state);
-      if (options.speak !== false) showPetBubble(options.line || pickPetLine(state), options.duration || 2600);
+      if (options.speak !== false) {
+        const line = options.line || pickPetLine(state);
+        if (options.type) showPetBubbleTyped(line, options.duration || 4200, options.speed || 46);
+        else showPetBubble(line, options.duration || 2600);
+      }
       clearTimeout(petReturnTimer);
       if (options.returnToIdle) {
         petReturnTimer = setTimeout(() => setPetState("idle", { speak: false }), options.returnToIdle);
@@ -3138,6 +3219,8 @@
       } catch (error) {
         currentAudio = previous;
         musicOn = Boolean(previous && !previous.paused);
+        soundBtn.classList.toggle("is-playing", musicOn);
+        soundBtn.textContent = "♪ 浏览器拦截了声音，再点一次";
         return;
       }
 
@@ -3160,6 +3243,7 @@
       }
 
       musicOn = true;
+      soundBtn.classList.add("is-playing");
       soundBtn.textContent = key === "home" ? "♪ 主界面音乐已开启" : `♪ 正在播放：${config.label}`;
     }
 
@@ -3173,6 +3257,7 @@
         });
       }
       musicOn = false;
+      soundBtn.classList.remove("is-playing");
       if (updateButtons) {
         soundBtn.textContent = "♪ 开启主界面音乐";
       }
@@ -3205,6 +3290,7 @@
         fadeAudio(audio, 0, effectVolume || 0.5, 1200);
       }).catch(() => {
         weatherEffectAudio = null;
+        sceneSoundBtn.textContent = "♪ 浏览器拦截了音效，再点一次";
       });
 
       weatherEffectOn = true;
@@ -3311,6 +3397,7 @@
     gameClose.addEventListener("click", () => {
       gameOverlay.classList.remove("show");
       gameIframe.src = "";
+      if (gameCaption) gameCaption.classList.remove("show");
       /* 退出副本时恢复主界面音乐 */
       startMusic();
       setPetState("wave", { line: "欢迎回来，心情地图还在这里。", returnToIdle: 2200 });
@@ -3349,7 +3436,8 @@
         var gameLine = dungeon.title === "命运之书"
           ? "翻开书页，答案会自己浮现。"
           : "《" + dungeon.title + "》开始了！逐字声音同步版";
-        setPetState("curious", { line: gameLine, returnToIdle: 3200 });
+        showGameCaptionTyped(gameLine);
+        setPetState("curious", { line: gameLine, returnToIdle: 4200, duration: 4200, type: true });
         return;
       }
       document.querySelectorAll(".dungeon").forEach(item => item.classList.remove("active"));
