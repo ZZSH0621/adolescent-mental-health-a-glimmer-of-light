@@ -2958,6 +2958,8 @@
     let currentWeatherLevel = 2; // 雨天默认中间档
     let audioCtx = null;
     let activeLayers = [];
+    const OSS_MEDIA_BASE = "https://96vedio.oss-cn-beijing.aliyuncs.com/A-glimmer-of-Light/";
+    const ossMedia = path => OSS_MEDIA_BASE + path;
 
     function getAudioCtx() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2969,39 +2971,45 @@
       home: {
         label: "A Light Through the Fog",
         volume: 0.64,
-        src: "assets/audio/A-Light-Through-the-Fog-v1-master.wav"
+        src: ossMedia("assets/audio/A-Light-Through-the-Fog-v1-master.wav"),
+        fallbackSrc: "assets/audio/A-Light-Through-the-Fog-v1-master.wav"
       },
       rain: {
         label: "雨天音效",
         levels: [
-          { name: "滴答", volume: 0.28, src: "assets/audio/weather-rain-drops.mp3" },
-          { name: "淅沥", volume: 0.32, src: "assets/audio/weather-rain-light.mp3" },
-          { name: "倾盆", volume: 0.35, src: "assets/audio/weather-rain-heavy.mp3" }
+          { name: "滴答", volume: 0.28, src: ossMedia("assets/audio/weather-rain-drops.mp3"), fallbackSrc: "assets/audio/weather-rain-drops.mp3" },
+          { name: "淅沥", volume: 0.32, src: ossMedia("assets/audio/weather-rain-light.mp3"), fallbackSrc: "assets/audio/weather-rain-light.mp3" },
+          { name: "倾盆", volume: 0.35, src: ossMedia("assets/audio/weather-rain-heavy.mp3"), fallbackSrc: "assets/audio/weather-rain-heavy.mp3" }
         ]
       },
       fog: {
         label: "雾天音效",
-        effectSrc: "assets/audio/weather-fog.wav",
+        effectSrc: ossMedia("assets/audio/weather-fog.wav"),
+        fallbackEffectSrc: "assets/audio/weather-fog.wav",
         effectVolume: 0.22
       },
       noise: {
         label: "风暴音效",
-        effectSrc: "assets/audio/weather-noise.wav",
+        effectSrc: ossMedia("assets/audio/weather-noise.wav"),
+        fallbackEffectSrc: "assets/audio/weather-noise.wav",
         effectVolume: 0.25
       },
       empty: {
         label: "留白音效",
-        effectSrc: "assets/audio/weather-empty.wav",
+        effectSrc: ossMedia("assets/audio/weather-empty.wav"),
+        fallbackEffectSrc: "assets/audio/weather-empty.wav",
         effectVolume: 0.18
       },
       fire: {
         label: "火山音效",
-        effectSrc: "assets/audio/weather-fire.wav",
+        effectSrc: ossMedia("assets/audio/weather-fire.wav"),
+        fallbackEffectSrc: "assets/audio/weather-fire.wav",
         effectVolume: 0.25
       },
       tired: {
         label: "疲惫音效",
-        effectSrc: "assets/audio/weather-tired.wav",
+        effectSrc: ossMedia("assets/audio/weather-tired.wav"),
+        fallbackEffectSrc: "assets/audio/weather-tired.wav",
         effectVolume: 0.20
       }
     };
@@ -3203,19 +3211,53 @@
       }, 32);
     }
 
+    function createLoopingAudio(src, fallbackSrc) {
+      const sources = [src, fallbackSrc].filter(Boolean);
+      let index = 0;
+
+      return new Promise((resolve, reject) => {
+        function tryNext() {
+          if (index >= sources.length) {
+            reject(new Error("No playable audio source"));
+            return;
+          }
+
+          const audio = new Audio(sources[index]);
+          audio.loop = true;
+          audio.preload = "auto";
+          audio.volume = 0;
+
+          let settled = false;
+          const fail = () => {
+            if (settled) return;
+            settled = true;
+            audio.pause();
+            audio.src = "";
+            index += 1;
+            tryNext();
+          };
+
+          audio.addEventListener("error", fail, { once: true });
+          audio.play().then(() => {
+            if (settled) return;
+            settled = true;
+            resolve(audio);
+          }).catch(fail);
+        }
+
+        tryNext();
+      });
+    }
+
     async function startSoundscape(key) {
       const config = soundscapes[key] || soundscapes.home;
       const targetVolume = config.volume || 0.64;
       const targetSrc = config.src;
       const previous = currentAudio;
-      const audio = new Audio(targetSrc);
-      audio.loop = true;
-      audio.preload = "auto";
-      audio.volume = 0;
-      currentAudio = audio;
+      let audio = null;
 
       try {
-        await audio.play();
+        audio = await createLoopingAudio(targetSrc, config.fallbackSrc);
       } catch (error) {
         currentAudio = previous;
         musicOn = Boolean(previous && !previous.paused);
@@ -3223,6 +3265,8 @@
         soundBtn.textContent = "♪ 浏览器拦截了声音，再点一次";
         return;
       }
+
+      currentAudio = audio;
 
       if (previous) {
         const previousVolume = previous.volume;
@@ -3269,24 +3313,21 @@
       const config = soundscapes[weatherKey];
       if (!config) return;
 
-      let effectSrc, effectVolume;
+      let effectSrc, fallbackEffectSrc, effectVolume;
       if (config.levels) {
         const lvl = config.levels[Math.min(currentWeatherLevel, config.levels.length) - 1];
         effectSrc = lvl.src;
+        fallbackEffectSrc = lvl.fallbackSrc;
         effectVolume = lvl.volume;
       } else {
         effectSrc = config.effectSrc;
+        fallbackEffectSrc = config.fallbackEffectSrc;
         effectVolume = config.effectVolume;
       }
       if (!effectSrc) return;
 
-      const audio = new Audio(effectSrc);
-      audio.loop = true;
-      audio.preload = "auto";
-      audio.volume = 0;
-      weatherEffectAudio = audio;
-
-      audio.play().then(() => {
+      createLoopingAudio(effectSrc, fallbackEffectSrc).then(audio => {
+        weatherEffectAudio = audio;
         fadeAudio(audio, 0, effectVolume || 0.5, 1200);
       }).catch(() => {
         weatherEffectAudio = null;

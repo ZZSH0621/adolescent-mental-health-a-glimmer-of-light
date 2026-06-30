@@ -671,6 +671,8 @@ canvas#particles{position:absolute;top:0;left:0;width:100%;height:100%;pointer-e
 (function(){
 'use strict';
 
+var OSS_AUDIO_BASE = 'https://96vedio.oss-cn-beijing.aliyuncs.com/A-glimmer-of-Light/audio/';
+
 /* ===== DATA ===== */
 var ROUNDS = [
   {
@@ -1062,6 +1064,20 @@ function showThought(text, callback){
 var _currentAudio = null;
 var _syncRAF = null;
 
+function createAudioWithFallback(audioFilename){
+  var audio = new Audio(OSS_AUDIO_BASE + audioFilename);
+  audio.preload = 'auto';
+  var triedFallback = false;
+  audio.addEventListener('error', function(){
+    if(triedFallback) return;
+    triedFallback = true;
+    audio.src = 'audio/' + audioFilename;
+    audio.load();
+    audio.play().catch(function(){});
+  }, { once: true });
+  return audio;
+}
+
 function stopCurrentAudio(){
   if(_syncRAF){ cancelAnimationFrame(_syncRAF); _syncRAF = null; }
   if(_currentAudio){
@@ -1096,7 +1112,7 @@ function addLampMessage(text, audioFilename, callback){
   var audioEl = null;
   var subtitleUrl = null;
   if(audioFilename){
-    audioEl = new Audio('audio/' + audioFilename);
+    audioEl = createAudioWithFallback(audioFilename);
     _currentAudio = audioEl;
     subtitleUrl = 'audio/' + audioFilename.replace('.mp3', '.json');
   }
